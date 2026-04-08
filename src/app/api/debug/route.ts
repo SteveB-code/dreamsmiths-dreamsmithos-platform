@@ -1,30 +1,30 @@
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  // Test if auth module can even be imported
-  let authStatus = "unknown";
-  let authError = "";
-  try {
-    const { auth } = await import("@/lib/auth");
-    authStatus = auth ? "loaded" : "null";
+  const { auth } = await import("@/lib/auth");
 
-    // Try to create a test request to the auth handler
-    const testUrl = `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/api/auth/ok`;
-    const testReq = new Request(testUrl);
+  // Test the social sign-in endpoint directly
+  let signInResult = "unknown";
+  try {
+    const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+    const testReq = new Request(`${baseURL}/api/auth/sign-in/social`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider: "microsoft",
+        callbackURL: "/dashboard",
+      }),
+    });
     const testRes = await auth.handler(testReq);
-    authStatus = `loaded, handler returned ${testRes.status}`;
+    const body = await testRes.text();
+    signInResult = `status: ${testRes.status}, headers: ${JSON.stringify(Object.fromEntries(testRes.headers.entries()))}, body: ${body.substring(0, 500)}`;
   } catch (e) {
-    authStatus = "error";
-    authError = String(e);
+    signInResult = `error: ${String(e)}`;
   }
 
   return Response.json({
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || "(not set)",
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "(not set)",
     MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID ? "set" : "not set",
-    MICROSOFT_TENANT_ID: process.env.MICROSOFT_TENANT_ID || "(not set)",
-    expectedCallback: `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/api/auth/callback/microsoft`,
-    authStatus,
-    authError,
+    signInResult,
   });
 }

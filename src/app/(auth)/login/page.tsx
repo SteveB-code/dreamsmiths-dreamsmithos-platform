@@ -1,18 +1,30 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const handleMicrosoftLogin = async () => {
-    const result = await authClient.signIn.social({
-      provider: "microsoft",
-      callbackURL: "/dashboard",
-    });
+  const [loading, setLoading] = useState(false);
 
-    // If the client doesn't auto-redirect, do it manually
-    if (result?.data?.url) {
-      window.location.href = result.data.url;
+  const handleMicrosoftLogin = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/sign-in/social", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: "microsoft",
+          callbackURL: "/dashboard",
+        }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Sign in error:", err);
+      setLoading(false);
     }
   };
 
@@ -35,6 +47,7 @@ export default function LoginPage() {
           onClick={handleMicrosoftLogin}
           className="w-full h-11 gap-3"
           variant="outline"
+          disabled={loading}
         >
           <svg viewBox="0 0 21 21" className="h-5 w-5" aria-hidden="true">
             <rect x="1" y="1" width="9" height="9" fill="#f25022" />

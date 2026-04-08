@@ -5,10 +5,15 @@ import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const handleMicrosoftLogin = async () => {
-    await authClient.signIn.social({
+    const result = await authClient.signIn.social({
       provider: "microsoft",
       callbackURL: "/dashboard",
     });
+
+    // If the client doesn't auto-redirect, do it manually
+    if (result?.data?.url) {
+      window.location.href = result.data.url;
+    }
   };
 
   return (

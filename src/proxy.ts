@@ -3,6 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 const publicPaths = ["/", "/login", "/api"];
 
 export async function proxy(request: NextRequest) {
+  // DEV BYPASS: skip auth check until Microsoft OAuth is configured
+  // TODO: Remove this bypass once MICROSOFT_CLIENT_ID is set in env
+  if (!process.env.MICROSOFT_CLIENT_ID) {
+    return NextResponse.next();
+  }
+
   const { pathname } = request.nextUrl;
 
   // Allow public paths

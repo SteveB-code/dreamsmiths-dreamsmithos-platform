@@ -59,6 +59,17 @@ function statusColor(status: string): string {
   return colors[status] || "bg-gray-400";
 }
 
+function statusRing(status: string): string {
+  const colors: Record<string, string> = {
+    scheduled: "ring-gray-400/30",
+    upcoming: "ring-amber-400/30",
+    due: "ring-amber-500/30",
+    overdue: "ring-red-500/30",
+    complete: "ring-green-500/30",
+  };
+  return colors[status] || "ring-gray-400/30";
+}
+
 function StatusDot({ status }: { status: string }) {
   return <div className={`h-2.5 w-2.5 rounded-full ${statusColor(status)}`} />;
 }
@@ -82,16 +93,13 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function shortName(name: string): string {
-  const shorts: Record<string, string> = {
-    "Quarterly Product Report": "Report",
-    "Annual Product Report": "Annual Report",
-    "Annual Technical Review": "Tech Review",
-    "User Research / Feedback": "Research",
-    "Internal Roadmap Prep Workshop": "Roadmap Prep",
-    "Client Roadmap Workshop": "Client Roadmap",
+function categoryLabel(cat: string): string {
+  const labels: Record<string, string> = {
+    reporting: "Reporting",
+    client: "Client",
+    internal: "Internal",
   };
-  return shorts[name] || name.split(" ").slice(0, 2).join(" ");
+  return labels[cat] || cat;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,56 +184,20 @@ export function MilestoneTimeline({
     })
     .sort((a, b) => a.position - b.position);
 
-  // --- Stagger labels above/below to prevent overlap ---
-  // Greedy placement: for each milestone (left to right), place the label on
-  // whichever row (above or below) has the most available space.
-  const MIN_GAP = 7; // minimum % gap between label centers on the same row
-  const staggered = (() => {
-    let lastAbovePos = -100;
-    let lastBelowPos = -100;
-
-    return positioned.map((ms) => {
-      const aboveGap = ms.position - lastAbovePos;
-      const belowGap = ms.position - lastBelowPos;
-
-      // Place on whichever row has more room; prefer below when tied
-      let above: boolean;
-      if (belowGap >= MIN_GAP && aboveGap >= MIN_GAP) {
-        // Both rows have room — prefer below
-        above = false;
-      } else if (belowGap >= MIN_GAP) {
-        above = false;
-      } else if (aboveGap >= MIN_GAP) {
-        above = true;
-      } else {
-        // Neither row has room — pick the one with more gap
-        above = aboveGap > belowGap;
-      }
-
-      if (above) {
-        lastAbovePos = ms.position;
-      } else {
-        lastBelowPos = ms.position;
-      }
-
-      return { ...ms, labelAbove: above };
-    });
-  })();
-
   return (
-    <div className="relative px-4 pt-12 pb-2">
-      {/* Strategic planning window band */}
+    <div className="relative px-4">
+      {/* ── Planning window band ── */}
       {hasWindow && !windowWraps && (
         <div
-          className="absolute top-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded"
+          className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/30 rounded"
           style={{
             left: `calc(${windowStartPos}% + 16px)`,
             width: `${windowWidth}%`,
-            top: "8px",
-            bottom: "28px",
+            top: "0",
+            bottom: "20px",
           }}
         >
-          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-500 whitespace-nowrap font-medium">
+          <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[10px] text-blue-400 whitespace-nowrap">
             Client planning window
           </span>
         </div>
@@ -233,87 +205,85 @@ export function MilestoneTimeline({
       {hasWindow && windowWraps && (
         <>
           <div
-            className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-l"
+            className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/30 rounded-l"
             style={{
               left: `calc(${windowStartPos}% + 16px)`,
               width: `${100 - windowStartPos}%`,
-              top: "8px",
-              bottom: "28px",
+              top: "0",
+              bottom: "20px",
             }}
           >
-            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-500 whitespace-nowrap font-medium">
+            <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[10px] text-blue-400 whitespace-nowrap">
               Client planning window
             </span>
           </div>
           <div
-            className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-r"
+            className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/30 rounded-r"
             style={{
               left: "16px",
               width: `${monthToPosition(strategicPlanningWindowEnd!) + (1 / 12) * 100}%`,
-              top: "8px",
-              bottom: "28px",
+              top: "0",
+              bottom: "20px",
             }}
           />
         </>
       )}
 
-      {/* ── Above-line labels zone ── */}
-      <div className="relative h-8 mx-4">
-        {/* Today marker label (above) */}
-        {todayInRange && (
-          <div
-            className="absolute bottom-1 -translate-x-1/2"
-            style={{ left: `${todayPosition}%` }}
-          >
-            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-              Today
-            </span>
-          </div>
-        )}
-
-        {/* Above-line milestone labels */}
-        {staggered.filter(ms => ms.labelAbove).map((ms) => (
-          <div
-            key={ms.id + "-label"}
-            className="absolute bottom-1 -translate-x-1/2"
-            style={{ left: `${ms.position}%` }}
-          >
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-              {shortName(ms.typeName)}
-            </span>
-          </div>
-        ))}
-      </div>
+      {/* ── Spacer for planning window label ── */}
+      <div className="h-8" />
 
       {/* ── The timeline line ── */}
       <div className="relative h-px bg-border mx-4">
         {/* Today vertical line */}
         {todayInRange && (
-          <div
-            className="absolute w-px bg-emerald-500/40"
-            style={{
-              left: `${todayPosition}%`,
-              top: "-40px",
-              bottom: "-24px",
-            }}
-          />
+          <>
+            <div
+              className="absolute w-px bg-emerald-500/50"
+              style={{
+                left: `${todayPosition}%`,
+                top: "-28px",
+                bottom: "-20px",
+              }}
+            />
+            <div
+              className="absolute -translate-x-1/2"
+              style={{
+                left: `${todayPosition}%`,
+                top: "-26px",
+              }}
+            >
+              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-background px-1">
+                Today
+              </span>
+            </div>
+          </>
         )}
 
         {/* Budget deadline diamond */}
         {budgetPreparationMonth && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-default z-10"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10"
             style={{ left: `${budgetPosition}%` }}
+            onMouseEnter={() => setHoveredId("budget")}
+            onMouseLeave={() => setHoveredId(null)}
           >
-            <div
-              className="h-3.5 w-3.5 rotate-45 bg-blue-500 border-2 border-white dark:border-gray-900"
-              title={`Budget deadline: ${MONTH_ABBR[budgetPreparationMonth - 1]}`}
-            />
+            <div className="h-3.5 w-3.5 rotate-45 bg-blue-500 border-2 border-white dark:border-gray-900 cursor-default" />
+            <span className="absolute top-5 left-1/2 -translate-x-1/2 text-[10px] font-medium text-blue-500 whitespace-nowrap">
+              Budget
+            </span>
+            {hoveredId === "budget" && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-popover border shadow-md rounded-lg p-3 min-w-[180px] z-50 pointer-events-none">
+                <p className="text-sm font-medium">Budget Preparation Deadline</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {MONTH_ABBR[budgetPreparationMonth - 1]} — Client needs budget inputs finalised
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Milestone markers */}
-        {staggered.map((ms) => {
+        {positioned.map((ms) => {
           const isHovered = hoveredId === ms.id;
           return (
             <div
@@ -324,14 +294,9 @@ export function MilestoneTimeline({
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => onMilestoneClick(ms)}
             >
-              {/* Stem line connecting dot to label */}
+              {/* The dot — larger hit area with visible ring on hover */}
               <div
-                className={`absolute left-1/2 -translate-x-1/2 w-px bg-border ${ms.labelAbove ? "bottom-full h-3" : "top-full h-3"}`}
-              />
-
-              {/* The dot */}
-              <div
-                className={`h-4 w-4 rounded-full border-2 border-white dark:border-gray-900 ${statusColor(ms.status)} transition-transform ${isHovered ? "scale-125" : ""}`}
+                className={`h-4 w-4 rounded-full border-2 border-white dark:border-gray-900 ${statusColor(ms.status)} transition-all ${isHovered ? `scale-[1.4] ring-4 ${statusRing(ms.status)}` : ""}`}
               >
                 {ms.status === "complete" && (
                   <svg
@@ -348,23 +313,25 @@ export function MilestoneTimeline({
 
               {/* Hover tooltip */}
               {isHovered && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 bg-popover border shadow-md rounded-lg p-3 min-w-[200px] z-50 pointer-events-none">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-popover border shadow-md rounded-lg p-3 min-w-[220px] z-50 pointer-events-none">
                   <p className="text-sm font-medium">{ms.typeName}</p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1.5">
                     <StatusDot status={ms.status} />
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs font-medium">
                       {statusLabel(ms.status)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      · {categoryLabel(ms.typeCategory)}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Due: {ms.dueDate ? formatDate(ms.dueDate) : "Not set"}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Owner:{" "}
-                    {ms.ownerFirstName
-                      ? `${ms.ownerFirstName} ${ms.ownerLastName}`
-                      : "Unassigned"}
-                  </p>
+                  {ms.ownerFirstName && (
+                    <p className="text-xs text-muted-foreground">
+                      Owner: {ms.ownerFirstName} {ms.ownerLastName}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -372,40 +339,12 @@ export function MilestoneTimeline({
         })}
       </div>
 
-      {/* ── Below-line labels zone ── */}
-      <div className="relative h-10 mx-4">
-        {/* Below-line milestone labels */}
-        {staggered.filter(ms => !ms.labelAbove).map((ms) => (
-          <div
-            key={ms.id + "-label"}
-            className="absolute top-3 -translate-x-1/2"
-            style={{ left: `${ms.position}%` }}
-          >
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-              {shortName(ms.typeName)}
-            </span>
-          </div>
-        ))}
-
-        {/* Budget label (below, always) */}
-        {budgetPreparationMonth && (
-          <div
-            className="absolute top-3 -translate-x-1/2"
-            style={{ left: `${budgetPosition}%` }}
-          >
-            <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
-              Budget
-            </span>
-          </div>
-        )}
-      </div>
-
       {/* ── Month labels ── */}
-      <div className="relative h-5 mx-4 border-t border-border/50">
+      <div className="relative h-7 mx-4 mt-3">
         {months.map((m) => (
           <span
             key={m.label + m.position}
-            className="absolute text-[10px] text-muted-foreground/70 -translate-x-1/2 pt-1"
+            className="absolute text-[11px] text-muted-foreground/60 -translate-x-1/2"
             style={{ left: `${m.position}%` }}
           >
             {m.label}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Monitor, ShieldCheck, Briefcase, AlertTriangle, UserPlus } from "lucide-react";
+import { Users, Monitor, ShieldCheck, Briefcase, AlertTriangle, UserPlus, FileText } from "lucide-react";
 
 interface DashboardData {
   totalPeople: number;
@@ -11,9 +12,21 @@ interface DashboardData {
   complianceOverdue: number;
   compliancePending: number;
   onboardingActive: number;
+  contractsExpiringSoon: number;
 }
 
+const cards = [
+  { key: "totalPeople", label: "Total People", sub: "Active team members", icon: Users, href: "/people" },
+  { key: "contractors", label: "Contractors", sub: "External contractors", icon: Briefcase, href: "/people" },
+  { key: "activePlatforms", label: "Active Platforms", sub: "Client platforms managed", icon: Monitor, href: "/platforms" },
+  { key: "compliancePending", label: "Compliance", sub: "Pending reviews", icon: ShieldCheck, href: null },
+  { key: "complianceOverdue", label: "Overdue", sub: "Compliance items overdue", icon: AlertTriangle, href: null },
+  { key: "onboardingActive", label: "Onboarding", sub: "Active onboarding journeys", icon: UserPlus, href: "/onboarding" },
+  { key: "contractsExpiringSoon", label: "Contracts", sub: "Expiring within 4 months", icon: FileText, href: "/contracts" },
+] as const;
+
 export function DashboardCards() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
@@ -22,77 +35,30 @@ export function DashboardCards() {
       .then(setData);
   }, []);
 
-  const val = (n: number | undefined) =>
-    n !== undefined ? String(n) : "--";
+  const val = (key: string) => {
+    if (!data) return "--";
+    const n = data[key as keyof DashboardData];
+    return n !== undefined ? String(n) : "--";
+  };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Total People</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{val(data?.totalPeople)}</div>
-          <p className="text-xs text-muted-foreground">Active team members</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Contractors</CardTitle>
-          <Briefcase className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{val(data?.contractors)}</div>
-          <p className="text-xs text-muted-foreground">External contractors</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">
-            Active Platforms
-          </CardTitle>
-          <Monitor className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {val(data?.activePlatforms)}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Client platforms managed
-          </p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Compliance</CardTitle>
-          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{val(data?.compliancePending)}</div>
-          <p className="text-xs text-muted-foreground">Pending reviews</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{val(data?.complianceOverdue)}</div>
-          <p className="text-xs text-muted-foreground">Compliance items overdue</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Onboarding</CardTitle>
-          <UserPlus className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{val(data?.onboardingActive)}</div>
-          <p className="text-xs text-muted-foreground">Active onboarding journeys</p>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => (
+        <Card
+          key={card.key}
+          className={card.href ? "cursor-pointer transition-shadow hover:shadow-md" : ""}
+          onClick={card.href ? () => router.push(card.href) : undefined}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">{card.label}</CardTitle>
+            <card.icon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{val(card.key)}</div>
+            <p className="text-xs text-muted-foreground">{card.sub}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

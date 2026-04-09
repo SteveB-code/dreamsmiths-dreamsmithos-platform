@@ -1,31 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const [loading, setLoading] = useState(false);
-
-  const handleMicrosoftLogin = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/sign-in/social", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: "microsoft",
-          callbackURL: "/dashboard",
-        }),
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error("Sign in error:", err);
-      setLoading(false);
-    }
+  const handleMicrosoftLogin = () => {
+    // Full page navigation — ensures cookies are set properly
+    window.location.href = "/api/auth/microsoft";
   };
 
   return (

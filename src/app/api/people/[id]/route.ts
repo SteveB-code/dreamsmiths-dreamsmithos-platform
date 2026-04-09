@@ -6,6 +6,7 @@ import {
   platform,
   personTechnology,
   technology,
+  onboardingJourney,
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -51,10 +52,18 @@ export async function GET(
     .innerJoin(technology, eq(personTechnology.technologyId, technology.id))
     .where(eq(personTechnology.personId, id));
 
+  // Get onboarding journey
+  const [journey] = await db
+    .select()
+    .from(onboardingJourney)
+    .where(eq(onboardingJourney.personId, id))
+    .limit(1);
+
   return NextResponse.json({
     ...found,
     platforms: assignments,
     technologies: techs,
+    onboarding: journey || null,
   });
 }
 

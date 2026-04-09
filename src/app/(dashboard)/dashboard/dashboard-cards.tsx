@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Monitor, ShieldCheck, Briefcase } from "lucide-react";
+import { Users, Monitor, ShieldCheck, Briefcase, AlertTriangle, UserPlus } from "lucide-react";
 
 interface DashboardData {
   totalPeople: number;
   contractors: number;
-  employees: number;
   activePlatforms: number;
+  complianceOverdue: number;
+  compliancePending: number;
+  onboardingActive: number;
 }
 
 export function DashboardCards() {
@@ -24,7 +26,7 @@ export function DashboardCards() {
     n !== undefined ? String(n) : "--";
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Total People</CardTitle>
@@ -63,16 +65,32 @@ export function DashboardCards() {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">
-            Compliance
-          </CardTitle>
+          <CardTitle className="text-sm font-medium">Compliance</CardTitle>
           <ShieldCheck className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">--</div>
-          <p className="text-xs text-muted-foreground">
-            Coming soon
-          </p>
+          <div className="text-2xl font-bold">{val(data?.compliancePending)}</div>
+          <p className="text-xs text-muted-foreground">Pending reviews</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{val(data?.complianceOverdue)}</div>
+          <p className="text-xs text-muted-foreground">Compliance items overdue</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">Onboarding</CardTitle>
+          <UserPlus className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{val(data?.onboardingActive)}</div>
+          <p className="text-xs text-muted-foreground">Active onboarding journeys</p>
         </CardContent>
       </Card>
     </div>

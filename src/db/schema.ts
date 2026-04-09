@@ -199,6 +199,49 @@ export const contract = pgTable("contract", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ============================================================
+// Playbook tables
+// ============================================================
+
+export const playbookCategoryEnum = pgEnum("playbook_category", [
+  "getting_started",
+  "development",
+  "client_work",
+  "operations",
+  "design",
+  "general",
+]);
+
+export const playbookContentTypeEnum = pgEnum("playbook_content_type", [
+  "video",
+  "sop",
+  "template",
+  "guide",
+  "policy",
+]);
+
+export const playbookItem = pgTable("playbook_item", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: playbookCategoryEnum("category").notNull(),
+  contentType: playbookContentTypeEnum("content_type").notNull(),
+  // Content source — one of these will be populated
+  externalUrl: text("external_url"), // YouTube/Vimeo URL
+  fileUrl: text("file_url"), // R2 file URL (future)
+  fileName: text("file_name"),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  markdownContent: text("markdown_content"), // For rich text content stored directly
+  // Audience — who can see this. Stored as comma-separated roles: "management,product_lead,employee,contractor"
+  audience: text("audience").notNull().default("management,product_lead,employee,contractor"),
+  // Ordering and metadata
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdBy: text("created_by").references(() => user.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const technology = pgTable("technology", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),

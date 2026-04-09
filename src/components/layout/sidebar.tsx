@@ -9,6 +9,7 @@ import {
   Monitor,
   FileText,
   ClipboardCheck,
+  BookOpen,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,10 +22,12 @@ const adminNavigation = [
   { name: "Platforms", href: "/platforms", icon: Monitor },
   { name: "Contracts", href: "/contracts", icon: FileText },
   { name: "Onboarding", href: "/onboarding", icon: ClipboardCheck },
+  { name: "Playbook", href: "/playbook", icon: BookOpen },
 ];
 
 const contractorNavigation = [
   { name: "My Onboarding", href: "/onboarding", icon: ClipboardCheck },
+  { name: "Playbook", href: "/playbook", icon: BookOpen },
 ];
 
 export function Sidebar() {

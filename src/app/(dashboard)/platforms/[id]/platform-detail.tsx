@@ -281,7 +281,9 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{member.roleOnPlatform}</Badge>
+                    {member.roleOnPlatform.split(", ").map((role: string) => (
+                      <Badge key={role} variant="outline">{role}</Badge>
+                    ))}
                     <Badge
                       variant={
                         member.type === "employee" ? "default" : "secondary"

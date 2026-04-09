@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { X } from "lucide-react";
 
 interface Person {
   id: string;
@@ -35,6 +36,7 @@ interface AssignPersonDialogProps {
 }
 
 const platformRoles = [
+  "Product Administrator",
   "Product Lead",
   "Architect",
   "Lead Dev",
@@ -52,9 +54,11 @@ export function AssignPersonDialog({
 }: AssignPersonDialogProps) {
   const [people, setPeople] = useState<Person[]>([]);
   const [selectedPersonId, setSelectedPersonId] = useState("");
-  const [roleOnPlatform, setRoleOnPlatform] = useState("");
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const roleDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -64,10 +68,33 @@ export function AssignPersonDialog({
     }
   }, [open]);
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        roleDropdownRef.current &&
+        !roleDropdownRef.current.contains(e.target as Node)
+      ) {
+        setRoleDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  };
+
+  const removeRole = (role: string) => {
+    setSelectedRoles((prev) => prev.filter((r) => r !== role));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPersonId || !roleOnPlatform) {
-      setError("Please select a person and role");
+    if (!selectedPersonId || selectedRoles.length === 0) {
+      setError("Please select a person and at least one role");
       return;
     }
 
@@ -79,7 +106,7 @@ export function AssignPersonDialog({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         personId: selectedPersonId,
-        roleOnPlatform,
+        roleOnPlatform: selectedRoles.join(", "),
       }),
     });
 
@@ -92,7 +119,7 @@ export function AssignPersonDialog({
 
     setSaving(false);
     setSelectedPersonId("");
-    setRoleOnPlatform("");
+    setSelectedRoles([]);
     onSuccess();
   };
 
@@ -118,20 +145,68 @@ export function AssignPersonDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Role on Platform</Label>
-            <Select value={roleOnPlatform} onValueChange={(v) => setRoleOnPlatform(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {platformRoles.map((role) => (
-                  <SelectItem key={role} value={role}>
+          <div className="space-y-2" ref={roleDropdownRef}>
+            <Label>Roles on Platform</Label>
+            {selectedRoles.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {selectedRoles.map((role) => (
+                  <Badge key={role} variant="secondary" className="gap-1">
                     {role}
-                  </SelectItem>
+                    <button
+                      type="button"
+                      onClick={() => removeRole(role)}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-start text-sm font-normal"
+              onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
+            >
+              {selectedRoles.length === 0
+                ? "Select roles..."
+                : `${selectedRoles.length} role${selectedRoles.length > 1 ? "s" : ""} selected`}
+            </Button>
+            {roleDropdownOpen && (
+              <div className="rounded-md border bg-popover p-1 shadow-md">
+                {platformRoles.map((role) => (
+                  <button
+                    key={role}
+                    type="button"
+                    className={`flex w-full items-center rounded-sm px-2 py-1.5 text-sm hover:bg-accent ${
+                      selectedRoles.includes(role) ? "bg-accent" : ""
+                    }`}
+                    onClick={() => toggleRole(role)}
+                  >
+                    <span
+                      className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ${
+                        selectedRoles.includes(role)
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground"
+                      }`}
+                    >
+                      {selectedRoles.includes(role) && (
+                        <svg width="10" height="10" viewBox="0 0 10 10">
+                          <path
+                            d="M1.5 5L4 7.5L8.5 2.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            fill="none"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                    {role}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>

@@ -284,7 +284,9 @@ export function PersonDetail({ personId }: { personId: string }) {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{pa.roleOnPlatform}</Badge>
+                    {pa.roleOnPlatform.split(", ").map((role: string) => (
+                      <Badge key={role} variant="outline">{role}</Badge>
+                    ))}
                     {!pa.isActive && (
                       <Badge variant="secondary">Inactive</Badge>
                     )}

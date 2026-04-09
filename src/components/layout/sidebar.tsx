@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -12,15 +13,34 @@ import {
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 
-const navigation = [
+const adminNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "People", href: "/people", icon: Users },
   { name: "Platforms", href: "/platforms", icon: Monitor },
   { name: "Onboarding", href: "/onboarding", icon: ClipboardCheck },
 ];
 
+const contractorNavigation = [
+  { name: "My Onboarding", href: "/onboarding", icon: ClipboardCheck },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => {
+        setRole(data.user?.role || "contractor");
+      })
+      .catch(() => setRole("contractor"));
+  }, []);
+
+  const navigation =
+    role === "admin" || role === "product_lead"
+      ? adminNavigation
+      : contractorNavigation;
 
   const handleSignOut = async () => {
     await authClient.signOut();

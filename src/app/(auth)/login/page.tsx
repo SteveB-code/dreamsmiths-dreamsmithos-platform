@@ -17,7 +17,7 @@ export default function LoginPage() {
         </div>
 
         <Link
-          href="/api/auth/ms-login"
+          href="/api/ms-login"
           className="inline-flex items-center justify-center gap-3 w-full h-11 rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
         >
           <svg viewBox="0 0 21 21" className="h-5 w-5" aria-hidden="true">

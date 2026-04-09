@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
+export async function GET() {
   const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
 
   try {
@@ -22,7 +22,6 @@ export async function GET(request: Request) {
       return Response.json({ error: "No redirect URL", data }, { status: 500 });
     }
 
-    // Build a manual redirect with the state cookie
     const setCookieHeader = response.headers.get("set-cookie");
 
     return new Response(

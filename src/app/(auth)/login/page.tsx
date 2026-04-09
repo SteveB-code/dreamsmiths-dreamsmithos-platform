@@ -2,6 +2,7 @@
 
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
+import { Logo, LogoMark } from "@/components/logo";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -23,16 +24,12 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center">
-      <div className="flex flex-col items-center gap-8 w-full max-w-sm">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-12 w-12 rounded-lg bg-emerald-700 flex items-center justify-center">
-            <span className="text-white font-bold text-xl">D</span>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            DreamsmithsOS
-          </h1>
+      <div className="flex flex-col items-center gap-10 w-full max-w-sm">
+        <div className="flex flex-col items-center gap-4">
+          <LogoMark />
+          <Logo size="default" />
           <p className="text-sm text-muted-foreground">
-            Sign in with your DreamSmiths account
+            Welcome. Sign in to continue.
           </p>
         </div>
 
@@ -43,7 +40,7 @@ export default function LoginPage() {
         <button
           onClick={handleSignIn}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-3 w-full h-11 rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-3 w-full h-12 rounded-lg border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg viewBox="0 0 21 21" className="h-5 w-5" aria-hidden="true">
             <rect x="1" y="1" width="9" height="9" fill="#f25022" />

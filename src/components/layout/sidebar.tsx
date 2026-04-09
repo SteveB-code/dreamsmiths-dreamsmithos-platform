@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
+import { Logo } from "@/components/logo";
 
 const adminNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -50,13 +51,8 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-64 flex-col border-r bg-card">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b px-6">
-        <div className="h-8 w-8 rounded-md bg-emerald-700 flex items-center justify-center">
-          <span className="text-white font-bold text-sm">D</span>
-        </div>
-        <span className="font-semibold text-lg tracking-tight">
-          DreamsmithsOS
-        </span>
+      <div className="flex h-16 items-center border-b px-6">
+        <Logo size="small" />
       </div>
 
       {/* Navigation */}

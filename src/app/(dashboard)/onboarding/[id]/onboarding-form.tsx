@@ -1038,7 +1038,7 @@ function Step7Playbook({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            The DreamSmiths Contractors&apos; Playbook contains guidelines for
+            The Dreamsmiths Contractors&apos; Playbook contains guidelines for
             working with us on projects. It covers communication protocols,
             development standards, time tracking, and general expectations.
           </p>
@@ -1056,7 +1056,7 @@ function Step7Playbook({
               className="mt-0.5 h-4 w-4 accent-primary"
             />
             <span className="text-sm">
-              I agree to abide by the DreamSmiths Contractors&apos; Playbook
+              I agree to abide by the Dreamsmiths Contractors&apos; Playbook
               guidelines
             </span>
           </label>

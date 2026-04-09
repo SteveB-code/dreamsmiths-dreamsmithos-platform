@@ -10,6 +10,8 @@ interface Renewal {
   platformName: string;
   clientOrg: string;
   endDate: string;
+  ownerFirstName: string | null;
+  ownerLastName: string | null;
 }
 
 function daysUntil(dateStr: string) {
@@ -80,6 +82,9 @@ export function UpcomingRenewals() {
                     </p>
                     <p className="text-sm text-muted-foreground truncate">
                       {r.title}
+                      {r.ownerFirstName && (
+                        <span className="ml-1">· {r.ownerFirstName} {r.ownerLastName}</span>
+                      )}
                     </p>
                     <p
                       className={`text-xs mt-0.5 ${days < 0 ? "text-red-600" : days <= 30 ? "text-amber-600" : "text-muted-foreground"}`}

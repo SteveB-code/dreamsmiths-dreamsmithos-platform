@@ -26,6 +26,16 @@ interface ContractData {
   endDate: string;
   status: "active" | "expiring_soon" | "expired" | "renewed";
   notes: string | null;
+  ownerId: string | null;
+  ownerFirstName: string | null;
+  ownerLastName: string | null;
+}
+
+interface Person {
+  id: string;
+  firstName: string;
+  lastName: string;
+  type: string;
 }
 
 function formatDate(dateStr: string) {
@@ -100,6 +110,8 @@ export function ContractDetail({ contractId }: { contractId: string }) {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [notes, setNotes] = useState("");
+  const [ownerId, setOwnerId] = useState("");
+  const [people, setPeople] = useState<Person[]>([]);
 
   const fetchContract = useCallback(async () => {
     try {
@@ -109,6 +121,7 @@ export function ContractDetail({ contractId }: { contractId: string }) {
       setContract(data);
       setStatus(data.status);
       setNotes(data.notes || "");
+      setOwnerId(data.ownerId || "");
     } catch {
       setError("Contract not found");
     } finally {
@@ -118,6 +131,10 @@ export function ContractDetail({ contractId }: { contractId: string }) {
 
   useEffect(() => {
     fetchContract();
+    fetch("/api/people")
+      .then((res) => res.json())
+      .then((data) => setPeople(data.filter((p: Person) => p.type === "employee")))
+      .catch(() => setPeople([]));
   }, [fetchContract]);
 
   const handleSave = async () => {
@@ -127,7 +144,7 @@ export function ContractDetail({ contractId }: { contractId: string }) {
     const res = await fetch(`/api/contracts/${contractId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, notes: notes || null }),
+      body: JSON.stringify({ status, notes: notes || null, ownerId: ownerId || null }),
     });
 
     if (!res.ok) {
@@ -227,6 +244,26 @@ export function ContractDetail({ contractId }: { contractId: string }) {
                 <SelectItem value="renewed">Renewed</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Owner */}
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Owner</p>
+            <Select value={ownerId} onValueChange={(v) => setOwnerId(v ?? "")}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Assign an owner" />
+              </SelectTrigger>
+              <SelectContent>
+                {people.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.firstName} {p.lastName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Responsible for managing this contract&apos;s renewal
+            </p>
           </div>
 
           {/* Notes */}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { contract, platform } from "@/db/schema";
+import { contract, platform, person } from "@/db/schema";
 import { and, asc, eq, gte, lte, not } from "drizzle-orm";
 
 // GET /api/contracts/renewals — upcoming contract renewals
@@ -17,19 +17,19 @@ export async function GET(request: NextRequest) {
       id: contract.id,
       platformId: contract.platformId,
       title: contract.title,
-      fileUrl: contract.fileUrl,
-      fileName: contract.fileName,
       startDate: contract.startDate,
       endDate: contract.endDate,
       status: contract.status,
       notes: contract.notes,
-      createdAt: contract.createdAt,
-      updatedAt: contract.updatedAt,
+      ownerId: contract.ownerId,
+      ownerFirstName: person.firstName,
+      ownerLastName: person.lastName,
       platformName: platform.name,
       clientOrg: platform.clientOrg,
     })
     .from(contract)
     .innerJoin(platform, eq(contract.platformId, platform.id))
+    .leftJoin(person, eq(contract.ownerId, person.id))
     .where(
       and(
         gte(contract.endDate, now),

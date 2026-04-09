@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { contract, platform } from "@/db/schema";
+import { contract, platform, person } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-// GET /api/contracts/:id — get a single contract with platform info
+// GET /api/contracts/:id — get a single contract with platform and owner info
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -23,6 +23,9 @@ export async function GET(
       endDate: contract.endDate,
       status: contract.status,
       notes: contract.notes,
+      ownerId: contract.ownerId,
+      ownerFirstName: person.firstName,
+      ownerLastName: person.lastName,
       uploadedBy: contract.uploadedBy,
       createdAt: contract.createdAt,
       updatedAt: contract.updatedAt,
@@ -31,6 +34,7 @@ export async function GET(
     })
     .from(contract)
     .innerJoin(platform, eq(contract.platformId, platform.id))
+    .leftJoin(person, eq(contract.ownerId, person.id))
     .where(eq(contract.id, id))
     .limit(1);
 
@@ -55,6 +59,7 @@ export async function PATCH(
     endDate,
     notes,
     status,
+    ownerId,
     fileUrl,
     fileName,
     fileSize,
@@ -69,6 +74,7 @@ export async function PATCH(
       ...(endDate !== undefined && { endDate: new Date(endDate) }),
       ...(notes !== undefined && { notes }),
       ...(status !== undefined && { status }),
+      ...(ownerId !== undefined && { ownerId: ownerId || null }),
       ...(fileUrl !== undefined && { fileUrl }),
       ...(fileName !== undefined && { fileName }),
       ...(fileSize !== undefined && { fileSize }),

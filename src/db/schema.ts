@@ -193,6 +193,7 @@ export const contract = pgTable("contract", {
   endDate: timestamp("end_date").notNull(),
   status: contractStatusEnum("status").notNull().default("active"),
   notes: text("notes"),
+  ownerId: uuid("owner_id").references(() => person.id, { onDelete: "set null" }),
   uploadedBy: text("uploaded_by").references(() => user.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

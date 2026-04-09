@@ -27,6 +27,13 @@ interface Platform {
   clientOrg: string;
 }
 
+interface Person {
+  id: string;
+  firstName: string;
+  lastName: string;
+  type: string;
+}
+
 interface AddContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,7 +48,9 @@ export function AddContractDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
   const [selectedPlatformId, setSelectedPlatformId] = useState("");
+  const [selectedOwnerId, setSelectedOwnerId] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -49,6 +58,10 @@ export function AddContractDialog({
         .then((res) => res.json())
         .then((data) => setPlatforms(data))
         .catch(() => setPlatforms([]));
+      fetch("/api/people")
+        .then((res) => res.json())
+        .then((data) => setPeople(data.filter((p: Person) => p.type === "employee")))
+        .catch(() => setPeople([]));
     }
   }, [open]);
 
@@ -64,6 +77,7 @@ export function AddContractDialog({
       startDate: formData.get("startDate"),
       endDate: formData.get("endDate"),
       notes: formData.get("notes") || null,
+      ownerId: selectedOwnerId || null,
     };
 
     if (!body.platformId) {
@@ -87,6 +101,7 @@ export function AddContractDialog({
 
     setSaving(false);
     setSelectedPlatformId("");
+    setSelectedOwnerId("");
     onSuccess();
   };
 
@@ -130,6 +145,24 @@ export function AddContractDialog({
               <Label htmlFor="endDate">End Date</Label>
               <Input id="endDate" name="endDate" type="date" required />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ownerId">Owner</Label>
+            <Select value={selectedOwnerId} onValueChange={(v) => setSelectedOwnerId(v ?? "")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select contract owner" />
+              </SelectTrigger>
+              <SelectContent>
+                {people.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.firstName} {p.lastName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Person responsible for managing this contract&apos;s renewal
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>

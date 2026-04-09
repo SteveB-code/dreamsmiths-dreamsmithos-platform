@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { contract, platform } from "@/db/schema";
+import { contract, platform, person } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
 
-// GET /api/contracts — list all contracts with platform info
+// GET /api/contracts — list all contracts with platform and owner info
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const status = searchParams.get("status") as
@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
       endDate: contract.endDate,
       status: contract.status,
       notes: contract.notes,
+      ownerId: contract.ownerId,
+      ownerFirstName: person.firstName,
+      ownerLastName: person.lastName,
       uploadedBy: contract.uploadedBy,
       createdAt: contract.createdAt,
       updatedAt: contract.updatedAt,
@@ -34,6 +37,7 @@ export async function GET(request: NextRequest) {
     })
     .from(contract)
     .innerJoin(platform, eq(contract.platformId, platform.id))
+    .leftJoin(person, eq(contract.ownerId, person.id))
     .orderBy(asc(contract.endDate))
     .$dynamic();
 
@@ -56,6 +60,7 @@ export async function POST(request: NextRequest) {
     startDate,
     endDate,
     notes,
+    ownerId,
     fileName,
     fileUrl,
     fileSize,
@@ -77,6 +82,7 @@ export async function POST(request: NextRequest) {
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       notes: notes || null,
+      ownerId: ownerId || null,
       fileName: fileName || null,
       fileUrl: fileUrl || null,
       fileSize: fileSize || null,

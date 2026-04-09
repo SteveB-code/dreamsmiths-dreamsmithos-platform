@@ -22,6 +22,8 @@ interface Contract {
   startDate: string;
   endDate: string;
   status: "active" | "expiring_soon" | "expired" | "renewed";
+  ownerFirstName: string | null;
+  ownerLastName: string | null;
 }
 
 function formatDate(dateStr: string) {
@@ -101,6 +103,7 @@ export function ContractsList() {
               <TableHead>Platform</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>End Date</TableHead>
+              <TableHead>Owner</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -108,7 +111,7 @@ export function ContractsList() {
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center py-8 text-muted-foreground"
                 >
                   Loading...
@@ -117,7 +120,7 @@ export function ContractsList() {
             ) : contracts.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No contracts found. Add your first contract.
@@ -142,6 +145,11 @@ export function ContractsList() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(c.endDate)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {c.ownerFirstName
+                      ? `${c.ownerFirstName} ${c.ownerLastName}`
+                      : "—"}
                   </TableCell>
                   <TableCell>{statusBadge(c.status, c.endDate)}</TableCell>
                 </TableRow>

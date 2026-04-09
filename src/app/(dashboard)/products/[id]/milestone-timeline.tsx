@@ -339,7 +339,7 @@ export function MilestoneTimeline({
         {/* Today marker label */}
         {todayInRange && (
           <div
-            className="absolute bottom-1 -translate-x-1/2 z-20"
+            className="absolute top-0 -translate-x-1/2 z-20"
             style={{ left: `${todayPosition}%` }}
           >
             <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-background px-0.5">
@@ -354,7 +354,7 @@ export function MilestoneTimeline({
           .map((ms) => (
             <div
               key={ms.id + "-label-above"}
-              className="absolute bottom-1 -translate-x-1/2"
+              className="absolute top-0 -translate-x-1/2"
               style={{ left: `${ms.position}%` }}
             >
               <span className="text-[10px] text-muted-foreground whitespace-nowrap">
@@ -412,7 +412,7 @@ export function MilestoneTimeline({
             >
               {/* Stem line to label */}
               <div
-                className={`absolute left-1/2 -translate-x-1/2 w-px bg-border/60 ${ms.labelAbove ? "bottom-full h-[18px]" : "top-full h-[18px]"}`}
+                className={`absolute left-1/2 -translate-x-1/2 w-px bg-border/60 ${ms.labelAbove ? "bottom-full h-[28px]" : "top-full h-[18px]"}`}
               />
 
               {/* The dot */}

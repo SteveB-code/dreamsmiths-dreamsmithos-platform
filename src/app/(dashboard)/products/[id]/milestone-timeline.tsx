@@ -334,38 +334,10 @@ export function MilestoneTimeline({
         </>
       )}
 
-      {/* ── Today label (own row above everything) ── */}
-      {todayInRange && (
-        <div className="relative h-6 mx-4">
-          <div
-            className="absolute top-0 -translate-x-1/2 z-20"
-            style={{ left: `${todayPosition}%` }}
-          >
-            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-              Today
-            </span>
-          </div>
-        </div>
-      )}
+      {/* ── Above-line spacer — reserves vertical space for above labels + Today ── */}
+      <div style={{ height: "48px" }} className="mx-4" />
 
-      {/* ── Above-line milestone labels zone ── */}
-      <div className="relative h-8 mx-4">
-        {staggered
-          .filter((ms) => ms.labelAbove)
-          .map((ms) => (
-            <div
-              key={ms.id + "-label-above"}
-              className="absolute top-0 -translate-x-1/2"
-              style={{ left: `${ms.position}%` }}
-            >
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                {shortName(ms.typeName)}
-              </span>
-            </div>
-          ))}
-      </div>
-
-      {/* ── The timeline line ── */}
+      {/* ── The timeline line — everything is positioned from here ── */}
       <div className="relative h-px bg-border mx-4">
         {/* Today vertical line */}
         {todayInRange && (
@@ -373,11 +345,38 @@ export function MilestoneTimeline({
             className="absolute w-px bg-emerald-500/40"
             style={{
               left: `${todayPosition}%`,
-              top: "-58px",
+              top: "-48px",
               bottom: "-28px",
             }}
           />
         )}
+
+        {/* Today label — positioned 44px above the line */}
+        {todayInRange && (
+          <div
+            className="absolute -translate-x-1/2 z-20"
+            style={{ left: `${todayPosition}%`, top: "-48px" }}
+          >
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+              Today
+            </span>
+          </div>
+        )}
+
+        {/* Above-line milestone labels — positioned 30px above the line */}
+        {staggered
+          .filter((ms) => ms.labelAbove)
+          .map((ms) => (
+            <div
+              key={ms.id + "-label-above"}
+              className="absolute -translate-x-1/2"
+              style={{ left: `${ms.position}%`, top: "-30px" }}
+            >
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                {shortName(ms.typeName)}
+              </span>
+            </div>
+          ))}
 
         {/* Budget deadline diamond */}
         {budgetPreparationMonth && (
@@ -412,9 +411,18 @@ export function MilestoneTimeline({
               onClick={() => onMilestoneClick(ms)}
             >
               {/* Stem line to label */}
-              <div
-                className={`absolute left-1/2 -translate-x-1/2 w-px bg-border/60 ${ms.labelAbove ? "bottom-full h-[34px]" : "top-full h-[18px]"}`}
-              />
+              {ms.labelAbove && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 w-px bg-border/60"
+                  style={{ bottom: "100%", height: "22px" }}
+                />
+              )}
+              {!ms.labelAbove && (
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 w-px bg-border/60"
+                  style={{ top: "100%", height: "18px" }}
+                />
+              )}
 
               {/* The dot */}
               <div

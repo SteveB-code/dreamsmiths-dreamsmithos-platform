@@ -16,8 +16,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for session cookie (BetterAuth uses "better-auth.session_token")
+  // Check for session cookie
+  // BetterAuth uses "__Secure-better-auth.session_token" in production (https)
+  // and "better-auth.session_token" in development (http)
   const sessionToken =
+    request.cookies.get("__Secure-better-auth.session_token")?.value ||
     request.cookies.get("better-auth.session_token")?.value;
 
   if (!sessionToken) {

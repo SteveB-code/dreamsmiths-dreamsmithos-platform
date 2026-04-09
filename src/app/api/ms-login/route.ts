@@ -22,18 +22,29 @@ export async function GET() {
       return Response.json({ error: "No redirect URL", data }, { status: 500 });
     }
 
-    const setCookieHeader = response.headers.get("set-cookie");
+    // Build redirect response, preserving all set-cookie headers from BetterAuth
+    // (includes the oauth_state cookie needed for callback verification)
+    const redirectResponse = new Response(null, {
+      status: 302,
+      headers: { Location: data.url },
+    });
 
-    return new Response(
-      `<html><head><meta http-equiv="refresh" content="0;url=${data.url}"></head><body>Redirecting to Microsoft...</body></html>`,
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html",
-          ...(setCookieHeader ? { "Set-Cookie": setCookieHeader } : {}),
-        },
+    // Use getSetCookie() to properly handle multiple set-cookie headers
+    // without joining them (which corrupts cookie values)
+    const setCookies = response.headers.getSetCookie?.() ?? [];
+    for (const cookie of setCookies) {
+      redirectResponse.headers.append("set-cookie", cookie);
+    }
+
+    // Fallback for environments without getSetCookie
+    if (setCookies.length === 0) {
+      const setCookieHeader = response.headers.get("set-cookie");
+      if (setCookieHeader) {
+        redirectResponse.headers.set("set-cookie", setCookieHeader);
       }
-    );
+    }
+
+    return redirectResponse;
   } catch (error) {
     return Response.json(
       { error: "Login failed", details: String(error) },

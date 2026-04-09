@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { onboardingJourney } from "@/db/schema";
+import { onboardingJourney, person } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 // GET /api/onboarding/:id — get a single onboarding journey
@@ -10,17 +10,26 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const [journey] = await db
-    .select()
+  const [result] = await db
+    .select({
+      journey: onboardingJourney,
+      firstName: person.firstName,
+      lastName: person.lastName,
+    })
     .from(onboardingJourney)
+    .innerJoin(person, eq(onboardingJourney.personId, person.id))
     .where(eq(onboardingJourney.id, id))
     .limit(1);
 
-  if (!journey) {
+  if (!result) {
     return NextResponse.json({ error: "Journey not found" }, { status: 404 });
   }
 
-  return NextResponse.json(journey);
+  return NextResponse.json({
+    ...result.journey,
+    firstName: result.firstName,
+    lastName: result.lastName,
+  });
 }
 
 // PATCH /api/onboarding/:id — update journey status/step

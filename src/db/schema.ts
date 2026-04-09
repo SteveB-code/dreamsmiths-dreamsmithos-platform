@@ -65,6 +65,8 @@ export const onboardingStatusEnum = pgEnum("onboarding_status", [
   "completed",
 ]);
 
+export const paymentMethodEnum = pgEnum("payment_method", ["eft", "upwork"]);
+
 // ============================================================
 // BetterAuth tables (managed by BetterAuth, defined here for reference)
 // These will be created by BetterAuth's migration. We keep them here
@@ -263,4 +265,56 @@ export const onboardingJourney = pgTable("onboarding_journey", {
   isRetrofit: boolean("is_retrofit").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================================
+// Contractor onboarding tables
+// ============================================================
+
+export const contractorProfile = pgTable("contractor_profile", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personId: uuid("person_id")
+    .notNull()
+    .unique()
+    .references(() => person.id, { onDelete: "cascade" }),
+  nickname: text("nickname"),
+  physicalAddress: text("physical_address"),
+  idNumber: text("id_number"),
+  idVerificationUrl: text("id_verification_url"),
+  proofOfAddressUrl: text("proof_of_address_url"),
+  nextOfKinName: text("next_of_kin_name"),
+  nextOfKinPhone: text("next_of_kin_phone"),
+  nextOfKinRelationship: text("next_of_kin_relationship"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const contractorFinancial = pgTable("contractor_financial", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personId: uuid("person_id")
+    .notNull()
+    .unique()
+    .references(() => person.id, { onDelete: "cascade" }),
+  hourlyRate: integer("hourly_rate"),
+  paymentMethod: paymentMethodEnum("payment_method"),
+  bankName: text("bank_name"),
+  accountHolder: text("account_holder"),
+  accountNumber: text("account_number"),
+  branchCode: text("branch_code"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const legalAgreement = pgTable("legal_agreement", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  onboardingJourneyId: uuid("onboarding_journey_id")
+    .notNull()
+    .references(() => onboardingJourney.id, { onDelete: "cascade" }),
+  personId: uuid("person_id")
+    .notNull()
+    .references(() => person.id, { onDelete: "cascade" }),
+  agreementType: text("agreement_type").notNull(),
+  agreedAt: timestamp("agreed_at"),
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });

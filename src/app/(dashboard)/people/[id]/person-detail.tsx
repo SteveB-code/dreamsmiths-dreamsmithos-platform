@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 import { TechSelect } from "@/components/tech-select";
 
@@ -33,6 +33,13 @@ interface Technology {
   category: string;
 }
 
+interface OnboardingJourney {
+  id: string;
+  status: "invited" | "in_progress" | "completed";
+  currentStep: number;
+  completedAt: string | null;
+}
+
 interface PersonData {
   id: string;
   firstName: string;
@@ -45,6 +52,7 @@ interface PersonData {
   dateJoined: string;
   platforms: PlatformAssignment[];
   technologies: Technology[];
+  onboarding: OnboardingJourney | null;
 }
 
 export function PersonDetail({ personId }: { personId: string }) {
@@ -54,6 +62,7 @@ export function PersonDetail({ personId }: { personId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [technologyIds, setTechnologyIds] = useState<string[]>([]);
+  const [startingOnboarding, setStartingOnboarding] = useState(false);
 
   useEffect(() => {
     fetch(`/api/people/${personId}`)
@@ -107,6 +116,23 @@ export function PersonDetail({ personId }: { personId: string }) {
     const res = await fetch(`/api/people/${personId}`, { method: "DELETE" });
     if (res.ok) {
       router.push("/people");
+    }
+  };
+
+  const handleStartOnboarding = async () => {
+    setStartingOnboarding(true);
+    try {
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personId }),
+      });
+      if (!res.ok) throw new Error("Failed to start onboarding");
+      const journey = await res.json();
+      router.push(`/onboarding/${journey.id}`);
+    } catch {
+      setError("Failed to start onboarding");
+      setStartingOnboarding(false);
     }
   };
 
@@ -297,6 +323,69 @@ export function PersonDetail({ personId }: { personId: string }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Onboarding */}
+      {person.type === "contractor" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Contractor Onboarding
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!person.onboarding ? (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  No onboarding journey started yet.
+                </p>
+                <Button
+                  onClick={handleStartOnboarding}
+                  disabled={startingOnboarding}
+                >
+                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                  {startingOnboarding
+                    ? "Starting..."
+                    : "Start Onboarding"}
+                </Button>
+              </div>
+            ) : person.onboarding.status === "completed" ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
+                    Completed
+                  </Badge>
+                  {person.onboarding.completedAt && (
+                    <span className="text-sm text-muted-foreground">
+                      Completed on{" "}
+                      {new Date(
+                        person.onboarding.completedAt
+                      ).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+                <Link href={`/onboarding/${person.onboarding.id}`}>
+                  <Button variant="outline" size="sm">
+                    View
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Badge variant="default">In Progress</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Step {person.onboarding.currentStep} of 7
+                  </span>
+                </div>
+                <Link href={`/onboarding/${person.onboarding.id}`}>
+                  <Button size="sm">Continue</Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

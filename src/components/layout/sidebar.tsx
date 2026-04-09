@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   Monitor,
+  ClipboardCheck,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "People", href: "/people", icon: Users },
   { name: "Platforms", href: "/platforms", icon: Monitor },
+  { name: "Onboarding", href: "/onboarding", icon: ClipboardCheck },
 ];
 
 export function Sidebar() {

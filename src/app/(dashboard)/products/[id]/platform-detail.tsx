@@ -18,7 +18,22 @@ import {
 import { ArrowLeft, Save, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { AssignPersonDialog } from "./assign-person-dialog";
+import { MilestonePanel } from "./milestone-panel";
 import { TechSelect } from "@/components/tech-select";
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function getFYLabel(startMonth: number): string {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const fyStartYear = currentMonth >= startMonth ? currentYear : currentYear - 1;
+  const fyEndYear = fyStartYear + 1;
+  return `FY ${fyStartYear}/${String(fyEndYear).slice(2)}`;
+}
 
 interface TeamMember {
   assignmentId: string;
@@ -48,6 +63,12 @@ interface PlatformData {
   dateOnboarded: string;
   team: TeamMember[];
   technologies: Technology[];
+  financialYearStartDay: number | null;
+  financialYearStartMonth: number | null;
+  budgetPreparationMonth: number | null;
+  strategicPlanningWindowStart: number | null;
+  strategicPlanningWindowEnd: number | null;
+  planningCycleNotes: string | null;
 }
 
 export function PlatformDetail({ platformId }: { platformId: string }) {
@@ -59,6 +80,16 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [technologyIds, setTechnologyIds] = useState<string[]>([]);
 
+  // Planning cycle state (separate from main form)
+  const [fyStartDay, setFyStartDay] = useState<string>("");
+  const [fyStartMonth, setFyStartMonth] = useState<string>("");
+  const [budgetPrepMonth, setBudgetPrepMonth] = useState<string>("");
+  const [planningWindowStart, setPlanningWindowStart] = useState<string>("");
+  const [planningWindowEnd, setPlanningWindowEnd] = useState<string>("");
+  const [planningNotes, setPlanningNotes] = useState<string>("");
+  const [savingPlanning, setSavingPlanning] = useState(false);
+  const [planningError, setPlanningError] = useState("");
+
   const fetchPlatform = useCallback(async () => {
     try {
       const res = await fetch(`/api/platforms/${platformId}`);
@@ -66,6 +97,12 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
       const data = await res.json();
       setPlatform(data);
       setTechnologyIds(data.technologies?.map((t: Technology) => t.id) || []);
+      setFyStartDay(data.financialYearStartDay?.toString() || "");
+      setFyStartMonth(data.financialYearStartMonth?.toString() || "");
+      setBudgetPrepMonth(data.budgetPreparationMonth?.toString() || "");
+      setPlanningWindowStart(data.strategicPlanningWindowStart?.toString() || "");
+      setPlanningWindowEnd(data.strategicPlanningWindowEnd?.toString() || "");
+      setPlanningNotes(data.planningCycleNotes || "");
     } catch {
       setError("Product not found");
     } finally {
@@ -126,6 +163,39 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
   const handlePersonAssigned = () => {
     setAssignDialogOpen(false);
     fetchPlatform();
+  };
+
+  const handleSavePlanning = async () => {
+    setSavingPlanning(true);
+    setPlanningError("");
+
+    const body = {
+      financialYearStartDay: fyStartDay ? parseInt(fyStartDay) : null,
+      financialYearStartMonth: fyStartMonth ? parseInt(fyStartMonth) : null,
+      budgetPreparationMonth: budgetPrepMonth ? parseInt(budgetPrepMonth) : null,
+      strategicPlanningWindowStart: planningWindowStart ? parseInt(planningWindowStart) : null,
+      strategicPlanningWindowEnd: planningWindowEnd ? parseInt(planningWindowEnd) : null,
+      planningCycleNotes: planningNotes || null,
+    };
+
+    try {
+      const res = await fetch(`/api/platforms/${platformId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        setPlanningError("Failed to save planning cycle settings");
+      } else {
+        const updated = await res.json();
+        setPlatform((prev) => (prev ? { ...prev, ...updated } : prev));
+      }
+    } catch {
+      setPlanningError("Failed to save planning cycle settings");
+    } finally {
+      setSavingPlanning(false);
+    }
   };
 
   if (loading) return <p className="text-muted-foreground">Loading...</p>;
@@ -242,6 +312,121 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
         </CardContent>
       </Card>
 
+      {/* Client Planning Cycle */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Client Planning Cycle</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Financial Year Start</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <Select value={fyStartDay} onValueChange={(v) => setFyStartDay(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <SelectItem key={d} value={String(d)}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={fyStartMonth} onValueChange={(v) => setFyStartMonth(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={m} value={String(i + 1)}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {fyStartMonth && (
+              <p className="text-sm text-muted-foreground">
+                Current financial year: {getFYLabel(parseInt(fyStartMonth))}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Budget Preparation Deadline</Label>
+            <Select value={budgetPrepMonth} onValueChange={(v) => setBudgetPrepMonth(v ?? "")}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select month" />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m, i) => (
+                  <SelectItem key={m} value={String(i + 1)}>
+                    {m}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Month by which the client needs budget inputs finalised
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Strategic Planning Window</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <Select value={planningWindowStart} onValueChange={(v) => setPlanningWindowStart(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Start month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={m} value={String(i + 1)}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={planningWindowEnd} onValueChange={(v) => setPlanningWindowEnd(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="End month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={m} value={String(i + 1)}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              When the client is actively doing strategic planning
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="planningNotes">Planning Cycle Notes</Label>
+            <Textarea
+              id="planningNotes"
+              rows={2}
+              value={planningNotes}
+              onChange={(e) => setPlanningNotes(e.target.value)}
+              placeholder="Additional context about client's planning process..."
+            />
+          </div>
+
+          {planningError && <p className="text-sm text-destructive">{planningError}</p>}
+
+          <div className="flex justify-end pt-2">
+            <Button type="button" onClick={handleSavePlanning} disabled={savingPlanning}>
+              <Save className="h-4 w-4 mr-2" />
+              {savingPlanning ? "Saving..." : "Save Planning Cycle"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Team */}
       <Card>
         <CardHeader>
@@ -312,6 +497,15 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
         onOpenChange={setAssignDialogOpen}
         platformId={platformId}
         onSuccess={handlePersonAssigned}
+      />
+
+      <MilestonePanel
+        platformId={platformId}
+        financialYearStartDay={platform.financialYearStartDay}
+        financialYearStartMonth={platform.financialYearStartMonth}
+        budgetPreparationMonth={platform.budgetPreparationMonth}
+        strategicPlanningWindowStart={platform.strategicPlanningWindowStart}
+        strategicPlanningWindowEnd={platform.strategicPlanningWindowEnd}
       />
     </div>
   );

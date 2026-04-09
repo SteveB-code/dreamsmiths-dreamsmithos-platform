@@ -70,8 +70,11 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
 
-  const { name, clientOrg, status, retainerTier, description, technologyIds } =
-    body;
+  const {
+    name, clientOrg, status, retainerTier, description, technologyIds,
+    financialYearStartDay, financialYearStartMonth, budgetPreparationMonth,
+    strategicPlanningWindowStart, strategicPlanningWindowEnd, planningCycleNotes,
+  } = body;
 
   const [updated] = await db
     .update(platform)
@@ -81,6 +84,12 @@ export async function PATCH(
       ...(status !== undefined && { status }),
       ...(retainerTier !== undefined && { retainerTier }),
       ...(description !== undefined && { description }),
+      ...(financialYearStartDay !== undefined && { financialYearStartDay }),
+      ...(financialYearStartMonth !== undefined && { financialYearStartMonth }),
+      ...(budgetPreparationMonth !== undefined && { budgetPreparationMonth }),
+      ...(strategicPlanningWindowStart !== undefined && { strategicPlanningWindowStart }),
+      ...(strategicPlanningWindowEnd !== undefined && { strategicPlanningWindowEnd }),
+      ...(planningCycleNotes !== undefined && { planningCycleNotes }),
       updatedAt: new Date(),
     })
     .where(eq(platform.id, id))

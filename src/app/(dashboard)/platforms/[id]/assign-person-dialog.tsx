@@ -38,6 +38,7 @@ interface AssignPersonDialogProps {
 const platformRoles = [
   "Product Administrator",
   "Product Lead",
+  "Business Analyst",
   "Architect",
   "Lead Dev",
   "Senior Dev",

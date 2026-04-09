@@ -85,11 +85,11 @@ function formatDate(dateStr: string): string {
 function shortName(name: string): string {
   const shorts: Record<string, string> = {
     "Quarterly Product Report": "Report",
-    "Annual Product Report": "Annual",
+    "Annual Product Report": "Annual Report",
     "Annual Technical Review": "Tech Review",
     "User Research / Feedback": "Research",
     "Internal Roadmap Prep Workshop": "Roadmap Prep",
-    "Client Roadmap Workshop": "Client Rdmap",
+    "Client Roadmap Workshop": "Client Roadmap",
   };
   return shorts[name] || name.split(" ").slice(0, 2).join(" ");
 }
@@ -148,107 +148,143 @@ export function MilestoneTimeline({
   if (hasWindow) {
     windowStartPos = monthToPosition(strategicPlanningWindowStart!);
     const windowEndPos = monthToPosition(strategicPlanningWindowEnd!);
-    // Handle wrap-around (e.g. Nov to Feb)
     if (windowEndPos >= windowStartPos) {
       windowWidth = windowEndPos - windowStartPos + (1 / 12) * 100;
     } else {
-      // Wraps around the year boundary
       windowWidth = (100 - windowStartPos) + windowEndPos + (1 / 12) * 100;
     }
-    // Clamp to 100
     windowWidth = Math.min(windowWidth, 100);
   }
+
+  const windowWraps = hasWindow && monthToPosition(strategicPlanningWindowEnd!) < monthToPosition(strategicPlanningWindowStart!);
 
   // --- Budget preparation diamond ---
   let budgetPosition = 0;
   if (budgetPreparationMonth) {
-    // Position at the middle of the month
     const monthsFromStart = ((budgetPreparationMonth - financialYearStartMonth + 12) % 12);
     budgetPosition = ((monthsFromStart + 0.5) / 12) * 100;
   }
 
-  // --- Plottable milestones ---
+  // --- Plottable milestones with positions ---
   const plottable = milestones.filter((m) => m.dueDate);
-  const positioned = plottable.map((m) => {
-    const date = new Date(m.dueDate!);
-    const daysSinceStart = (date.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
-    const position = Math.max(0, Math.min(100, (daysSinceStart / totalDays) * 100));
-    return { ...m, position };
-  });
+  const positioned = plottable
+    .map((m) => {
+      const date = new Date(m.dueDate!);
+      const daysSinceStart = (date.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
+      const position = Math.max(0, Math.min(100, (daysSinceStart / totalDays) * 100));
+      return { ...m, position };
+    })
+    .sort((a, b) => a.position - b.position);
 
-  // For wrapping window we need two bands
-  const windowWraps = hasWindow && monthToPosition(strategicPlanningWindowEnd!) < monthToPosition(strategicPlanningWindowStart!);
+  // --- Stagger labels above/below to prevent overlap ---
+  // Sort by position, then alternate: even index = below, odd index = above
+  const staggered = positioned.map((ms, idx) => ({
+    ...ms,
+    labelAbove: idx % 2 === 1,
+  }));
 
   return (
-    <div className="relative py-8 px-4">
+    <div className="relative px-4 pt-12 pb-2">
       {/* Strategic planning window band */}
       {hasWindow && !windowWraps && (
         <div
-          className="absolute top-2 bottom-8 bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded"
-          style={{ left: `calc(${windowStartPos}% + 16px)`, width: `${windowWidth}%` }}
+          className="absolute top-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded"
+          style={{
+            left: `calc(${windowStartPos}% + 16px)`,
+            width: `${windowWidth}%`,
+            top: "8px",
+            bottom: "28px",
+          }}
         >
-          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-500 whitespace-nowrap">
+          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-500 whitespace-nowrap font-medium">
             Client planning window
           </span>
         </div>
       )}
       {hasWindow && windowWraps && (
         <>
-          {/* First part: from start to end of timeline */}
           <div
-            className="absolute top-2 bottom-8 bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-l"
+            className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-l"
             style={{
               left: `calc(${windowStartPos}% + 16px)`,
               width: `${100 - windowStartPos}%`,
+              top: "8px",
+              bottom: "28px",
             }}
           >
-            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-500 whitespace-nowrap">
+            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-500 whitespace-nowrap font-medium">
               Client planning window
             </span>
           </div>
-          {/* Second part: from beginning of timeline to end month */}
           <div
-            className="absolute top-2 bottom-8 bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-r"
+            className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-800/30 rounded-r"
             style={{
               left: "16px",
               width: `${monthToPosition(strategicPlanningWindowEnd!) + (1 / 12) * 100}%`,
+              top: "8px",
+              bottom: "28px",
             }}
           />
         </>
       )}
 
-      {/* The timeline line */}
-      <div className="relative h-px bg-border mx-4 my-8">
-        {/* Today marker */}
+      {/* ── Above-line labels zone ── */}
+      <div className="relative h-10 mx-4">
+        {/* Today marker label (above) */}
         {todayInRange && (
           <div
-            className="absolute -top-8 bottom-0 w-px bg-foreground/30"
+            className="absolute bottom-0 -translate-x-1/2"
             style={{ left: `${todayPosition}%` }}
           >
-            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-medium text-foreground/50">
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
               Today
             </span>
           </div>
         )}
 
+        {/* Above-line milestone labels */}
+        {staggered.filter(ms => ms.labelAbove).map((ms) => (
+          <div
+            key={ms.id + "-label"}
+            className="absolute bottom-0 -translate-x-1/2"
+            style={{ left: `${ms.position}%` }}
+          >
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              {shortName(ms.typeName)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* ── The timeline line ── */}
+      <div className="relative h-px bg-border mx-4">
+        {/* Today vertical line */}
+        {todayInRange && (
+          <div
+            className="absolute w-px bg-emerald-500/40"
+            style={{
+              left: `${todayPosition}%`,
+              top: "-40px",
+              bottom: "-24px",
+            }}
+          />
+        )}
+
         {/* Budget deadline diamond */}
         {budgetPreparationMonth && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-default"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 cursor-default z-10"
             style={{ left: `${budgetPosition}%` }}
           >
             <div
               className="h-3.5 w-3.5 rotate-45 bg-blue-500 border-2 border-white dark:border-gray-900"
               title={`Budget deadline: ${MONTH_ABBR[budgetPreparationMonth - 1]}`}
             />
-            <span className="absolute top-5 left-1/2 -translate-x-1/2 text-[10px] text-blue-600 dark:text-blue-400 whitespace-nowrap">
-              Budget
-            </span>
           </div>
         )}
 
         {/* Milestone markers */}
-        {positioned.map((ms) => {
+        {staggered.map((ms) => {
           const isHovered = hoveredId === ms.id;
           return (
             <div
@@ -259,6 +295,11 @@ export function MilestoneTimeline({
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => onMilestoneClick(ms)}
             >
+              {/* Stem line connecting dot to label */}
+              <div
+                className={`absolute left-1/2 -translate-x-1/2 w-px bg-border ${ms.labelAbove ? "bottom-full h-3" : "top-full h-3"}`}
+              />
+
               {/* The dot */}
               <div
                 className={`h-4 w-4 rounded-full border-2 border-white dark:border-gray-900 ${statusColor(ms.status)} transition-transform ${isHovered ? "scale-125" : ""}`}
@@ -276,14 +317,9 @@ export function MilestoneTimeline({
                 )}
               </div>
 
-              {/* Label below */}
-              <span className="absolute top-5 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap max-w-[60px] truncate text-center">
-                {shortName(ms.typeName)}
-              </span>
-
               {/* Hover tooltip */}
               {isHovered && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-popover border shadow-md rounded-lg p-3 min-w-[200px] z-50">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 bg-popover border shadow-md rounded-lg p-3 min-w-[200px] z-50 pointer-events-none">
                   <p className="text-sm font-medium">{ms.typeName}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <StatusDot status={ms.status} />
@@ -307,12 +343,40 @@ export function MilestoneTimeline({
         })}
       </div>
 
-      {/* Month labels */}
-      <div className="relative h-5 mx-4">
+      {/* ── Below-line labels zone ── */}
+      <div className="relative h-10 mx-4">
+        {/* Below-line milestone labels */}
+        {staggered.filter(ms => !ms.labelAbove).map((ms) => (
+          <div
+            key={ms.id + "-label"}
+            className="absolute top-3 -translate-x-1/2"
+            style={{ left: `${ms.position}%` }}
+          >
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              {shortName(ms.typeName)}
+            </span>
+          </div>
+        ))}
+
+        {/* Budget label (below, always) */}
+        {budgetPreparationMonth && (
+          <div
+            className="absolute top-3 -translate-x-1/2"
+            style={{ left: `${budgetPosition}%` }}
+          >
+            <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+              Budget
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Month labels ── */}
+      <div className="relative h-5 mx-4 border-t border-border/50">
         {months.map((m) => (
           <span
             key={m.label + m.position}
-            className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
+            className="absolute text-[10px] text-muted-foreground/70 -translate-x-1/2 pt-1"
             style={{ left: `${m.position}%` }}
           >
             {m.label}

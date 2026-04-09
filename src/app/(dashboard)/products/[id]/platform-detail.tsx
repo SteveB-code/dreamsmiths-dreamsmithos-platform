@@ -26,6 +26,11 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
+const MONTH_ABBR = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
 function getFYLabel(startMonth: number): string {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -33,6 +38,13 @@ function getFYLabel(startMonth: number): string {
   const fyStartYear = currentMonth >= startMonth ? currentYear : currentYear - 1;
   const fyEndYear = fyStartYear + 1;
   return `FY ${fyStartYear}/${String(fyEndYear).slice(2)}`;
+}
+
+function getFYDateRange(startMonth: number): string {
+  const startName = MONTH_ABBR[startMonth - 1];
+  const endMonthIndex = (startMonth - 2 + 12) % 12;
+  const endName = MONTH_ABBR[endMonthIndex];
+  return `${startName} – ${endName}`;
 }
 
 interface TeamMember {
@@ -203,9 +215,10 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
   if (!platform) return null;
 
   const activeTeam = platform.team.filter((m) => m.isActive);
+  const fyConfigured = platform.financialYearStartMonth !== null;
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <Link
         href="/products"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
@@ -214,22 +227,49 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
         Back to Products
       </Link>
 
+      {/* ── Hero: Product header + key details ── */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{platform.name}</h1>
+          <p className="text-muted-foreground mt-0.5">
+            {platform.clientOrg}
+            {fyConfigured && (
+              <>
+                <span className="mx-2">·</span>
+                <span>{getFYLabel(platform.financialYearStartMonth!)}</span>
+                <span className="ml-1 text-xs">({getFYDateRange(platform.financialYearStartMonth!)})</span>
+              </>
+            )}
+          </p>
+        </div>
+        <Badge
+          variant={
+            platform.status === "active"
+              ? "default"
+              : platform.status === "paused"
+                ? "secondary"
+                : "destructive"
+          }
+          className="mt-1"
+        >
+          {platform.status}
+        </Badge>
+      </div>
+
+      {/* ── Timeline + Milestones (hero position) ── */}
+      <MilestonePanel
+        platformId={platformId}
+        financialYearStartDay={platform.financialYearStartDay}
+        financialYearStartMonth={platform.financialYearStartMonth}
+        budgetPreparationMonth={platform.budgetPreparationMonth}
+        strategicPlanningWindowStart={platform.strategicPlanningWindowStart}
+        strategicPlanningWindowEnd={platform.strategicPlanningWindowEnd}
+      />
+
+      {/* ── Product Details ── */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>{platform.name}</span>
-            <Badge
-              variant={
-                platform.status === "active"
-                  ? "default"
-                  : platform.status === "paused"
-                    ? "secondary"
-                    : "destructive"
-              }
-            >
-              {platform.status}
-            </Badge>
-          </CardTitle>
+          <CardTitle className="text-base">Product Details</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSave} className="space-y-4">
@@ -312,7 +352,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
         </CardContent>
       </Card>
 
-      {/* Client Planning Cycle */}
+      {/* ── Client Planning Cycle ── */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Client Planning Cycle</CardTitle>
@@ -427,7 +467,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
         </CardContent>
       </Card>
 
-      {/* Team */}
+      {/* ── Team ── */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -497,15 +537,6 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
         onOpenChange={setAssignDialogOpen}
         platformId={platformId}
         onSuccess={handlePersonAssigned}
-      />
-
-      <MilestonePanel
-        platformId={platformId}
-        financialYearStartDay={platform.financialYearStartDay}
-        financialYearStartMonth={platform.financialYearStartMonth}
-        budgetPreparationMonth={platform.budgetPreparationMonth}
-        strategicPlanningWindowStart={platform.strategicPlanningWindowStart}
-        strategicPlanningWindowEnd={platform.strategicPlanningWindowEnd}
       />
     </div>
   );

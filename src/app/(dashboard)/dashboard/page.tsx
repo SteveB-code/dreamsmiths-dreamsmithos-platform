@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/header";
 import { DashboardCards } from "./dashboard-cards";
 import { ContractorRedirect } from "./contractor-redirect";
 import { Greeting } from "./greeting";
+import { UpcomingRenewals } from "./upcoming-renewals";
 
 export default function DashboardPage() {
   return (
@@ -11,6 +12,7 @@ export default function DashboardPage() {
       <div className="p-6 space-y-8">
         <Greeting />
         <DashboardCards />
+        <UpcomingRenewals />
       </div>
     </div>
   );

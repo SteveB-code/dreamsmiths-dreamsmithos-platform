@@ -67,6 +67,13 @@ export const onboardingStatusEnum = pgEnum("onboarding_status", [
 
 export const paymentMethodEnum = pgEnum("payment_method", ["eft", "upwork"]);
 
+export const contractStatusEnum = pgEnum("contract_status", [
+  "active",
+  "expiring_soon",
+  "expired",
+  "renewed",
+]);
+
 // ============================================================
 // BetterAuth tables (managed by BetterAuth, defined here for reference)
 // These will be created by BetterAuth's migration. We keep them here
@@ -170,6 +177,25 @@ export const platformAssignment = pgTable("platform_assignment", {
   isActive: boolean("is_active").notNull().default(true),
   dateAssigned: timestamp("date_assigned").defaultNow(),
   dateRemoved: timestamp("date_removed"),
+});
+
+export const contract = pgTable("contract", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  platformId: uuid("platform_id")
+    .notNull()
+    .references(() => platform.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  fileUrl: text("file_url"),
+  fileName: text("file_name"),
+  fileSize: integer("file_size"),
+  mimeType: text("mime_type"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: contractStatusEnum("status").notNull().default("active"),
+  notes: text("notes"),
+  uploadedBy: text("uploaded_by").references(() => user.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const technology = pgTable("technology", {

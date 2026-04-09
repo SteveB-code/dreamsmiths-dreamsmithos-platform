@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   Monitor,
+  FileText,
   ClipboardCheck,
   LogOut,
 } from "lucide-react";
@@ -18,6 +19,7 @@ const adminNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "People", href: "/people", icon: Users },
   { name: "Platforms", href: "/platforms", icon: Monitor },
+  { name: "Contracts", href: "/contracts", icon: FileText },
   { name: "Onboarding", href: "/onboarding", icon: ClipboardCheck },
 ];
 

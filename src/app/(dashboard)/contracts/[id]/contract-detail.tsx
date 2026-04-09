@@ -249,18 +249,22 @@ export function ContractDetail({ contractId }: { contractId: string }) {
           {/* Owner */}
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">Owner</p>
-            <Select value={ownerId} onValueChange={(v) => setOwnerId(v ?? "")}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Assign an owner" />
-              </SelectTrigger>
-              <SelectContent>
-                {people.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.firstName} {p.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {people.length > 0 ? (
+              <Select value={ownerId} onValueChange={(v) => setOwnerId(v ?? "")}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Assign an owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  {people.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.firstName} {p.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            )}
             <p className="text-xs text-muted-foreground">
               Responsible for managing this contract&apos;s renewal
             </p>

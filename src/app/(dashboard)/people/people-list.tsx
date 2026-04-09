@@ -96,14 +96,13 @@ export function PeopleList() {
               </TableRow>
             ) : (
               people.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <Link
-                      href={`/people/${p.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {p.firstName} {p.lastName}
-                    </Link>
+                <TableRow
+                  key={p.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => window.location.href = `/people/${p.id}`}
+                >
+                  <TableCell className="font-medium">
+                    {p.firstName} {p.lastName}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {p.email}

@@ -112,14 +112,13 @@ export function PlatformList() {
               </TableRow>
             ) : (
               platforms.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <Link
-                      href={`/platforms/${p.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {p.name}
-                    </Link>
+                <TableRow
+                  key={p.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => window.location.href = `/platforms/${p.id}`}
+                >
+                  <TableCell className="font-medium">
+                    {p.name}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {p.clientOrg}

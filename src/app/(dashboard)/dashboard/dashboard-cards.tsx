@@ -15,14 +15,17 @@ interface DashboardData {
   contractsExpiringSoon: number;
 }
 
-const cards = [
-  { key: "totalPeople", label: "Total People", sub: "Active team members", icon: Users, href: "/people" },
-  { key: "contractors", label: "Contractors", sub: "External contractors", icon: Briefcase, href: "/people" },
-  { key: "activePlatforms", label: "Active Platforms", sub: "Client platforms managed", icon: Monitor, href: "/platforms" },
+const primaryCards = [
   { key: "compliancePending", label: "Compliance", sub: "Pending reviews", icon: ShieldCheck, href: null },
   { key: "complianceOverdue", label: "Overdue", sub: "Compliance items overdue", icon: AlertTriangle, href: null },
   { key: "onboardingActive", label: "Onboarding", sub: "Active onboarding journeys", icon: UserPlus, href: "/onboarding" },
   { key: "contractsExpiringSoon", label: "Contracts", sub: "Expiring within 4 months", icon: FileText, href: "/contracts" },
+] as const;
+
+const secondaryCards = [
+  { key: "totalPeople", label: "People", sub: "Active team members", icon: Users, href: "/people" },
+  { key: "contractors", label: "Contractors", sub: "External contractors", icon: Briefcase, href: "/people" },
+  { key: "activePlatforms", label: "Platforms", sub: "Client platforms managed", icon: Monitor, href: "/platforms" },
 ] as const;
 
 export function DashboardCards() {
@@ -42,23 +45,45 @@ export function DashboardCards() {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card) => (
-        <Card
-          key={card.key}
-          className={card.href ? "cursor-pointer transition-shadow hover:shadow-md" : ""}
-          onClick={card.href ? () => router.push(card.href) : undefined}
-        >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">{card.label}</CardTitle>
-            <card.icon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{val(card.key)}</div>
-            <p className="text-xs text-muted-foreground">{card.sub}</p>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-6">
+      {/* Primary — daily work areas */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {primaryCards.map((card) => (
+          <Card
+            key={card.key}
+            className={card.href ? "cursor-pointer transition-shadow hover:shadow-md" : ""}
+            onClick={card.href ? () => router.push(card.href) : undefined}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">{card.label}</CardTitle>
+              <card.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{val(card.key)}</div>
+              <p className="text-xs text-muted-foreground">{card.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Secondary — reference counts */}
+      <div className="grid gap-3 grid-cols-3">
+        {secondaryCards.map((card) => (
+          <Card
+            key={card.key}
+            className="cursor-pointer transition-shadow hover:shadow-md"
+            onClick={() => router.push(card.href)}
+          >
+            <CardContent className="flex items-center gap-3 py-3 px-4">
+              <card.icon className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex items-baseline gap-2 min-w-0">
+                <span className="text-lg font-semibold">{val(card.key)}</span>
+                <span className="text-xs text-muted-foreground truncate">{card.sub}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

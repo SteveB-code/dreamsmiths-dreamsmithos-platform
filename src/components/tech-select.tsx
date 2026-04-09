@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -19,12 +19,25 @@ interface TechSelectProps {
 export function TechSelect({ selectedIds, onChange }: TechSelectProps) {
   const [technologies, setTechnologies] = useState<Technology[]>([]);
   const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/technologies")
       .then((res) => res.json())
       .then(setTechnologies);
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   const selected = technologies.filter((t) => selectedIds.includes(t.id));
   const available = technologies.filter((t) => !selectedIds.includes(t.id));
@@ -77,7 +90,7 @@ export function TechSelect({ selectedIds, onChange }: TechSelectProps) {
       )}
 
       {/* Add button / dropdown */}
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <Button
           type="button"
           variant="outline"

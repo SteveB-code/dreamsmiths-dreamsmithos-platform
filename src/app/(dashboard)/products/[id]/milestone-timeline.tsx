@@ -177,11 +177,40 @@ export function MilestoneTimeline({
     .sort((a, b) => a.position - b.position);
 
   // --- Stagger labels above/below to prevent overlap ---
-  // Sort by position, then alternate: even index = below, odd index = above
-  const staggered = positioned.map((ms, idx) => ({
-    ...ms,
-    labelAbove: idx % 2 === 1,
-  }));
+  // Greedy placement: for each milestone (left to right), place the label on
+  // whichever row (above or below) has the most available space.
+  const MIN_GAP = 7; // minimum % gap between label centers on the same row
+  const staggered = (() => {
+    let lastAbovePos = -100;
+    let lastBelowPos = -100;
+
+    return positioned.map((ms) => {
+      const aboveGap = ms.position - lastAbovePos;
+      const belowGap = ms.position - lastBelowPos;
+
+      // Place on whichever row has more room; prefer below when tied
+      let above: boolean;
+      if (belowGap >= MIN_GAP && aboveGap >= MIN_GAP) {
+        // Both rows have room — prefer below
+        above = false;
+      } else if (belowGap >= MIN_GAP) {
+        above = false;
+      } else if (aboveGap >= MIN_GAP) {
+        above = true;
+      } else {
+        // Neither row has room — pick the one with more gap
+        above = aboveGap > belowGap;
+      }
+
+      if (above) {
+        lastAbovePos = ms.position;
+      } else {
+        lastBelowPos = ms.position;
+      }
+
+      return { ...ms, labelAbove: above };
+    });
+  })();
 
   return (
     <div className="relative px-4 pt-12 pb-2">
@@ -229,11 +258,11 @@ export function MilestoneTimeline({
       )}
 
       {/* ── Above-line labels zone ── */}
-      <div className="relative h-10 mx-4">
+      <div className="relative h-8 mx-4">
         {/* Today marker label (above) */}
         {todayInRange && (
           <div
-            className="absolute bottom-0 -translate-x-1/2"
+            className="absolute bottom-1 -translate-x-1/2"
             style={{ left: `${todayPosition}%` }}
           >
             <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
@@ -246,7 +275,7 @@ export function MilestoneTimeline({
         {staggered.filter(ms => ms.labelAbove).map((ms) => (
           <div
             key={ms.id + "-label"}
-            className="absolute bottom-0 -translate-x-1/2"
+            className="absolute bottom-1 -translate-x-1/2"
             style={{ left: `${ms.position}%` }}
           >
             <span className="text-[10px] text-muted-foreground whitespace-nowrap">

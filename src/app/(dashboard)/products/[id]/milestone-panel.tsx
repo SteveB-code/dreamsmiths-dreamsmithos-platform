@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ChevronDown, ChevronRight, Loader2, Save, Sparkles, Trash2 } from "lucide-react";
+import { MilestoneTimeline } from "./milestone-timeline";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -133,6 +134,9 @@ export function MilestonePanel({
   platformId,
   financialYearStartDay,
   financialYearStartMonth,
+  budgetPreparationMonth,
+  strategicPlanningWindowStart,
+  strategicPlanningWindowEnd,
 }: MilestonePanelProps) {
   const fyConfigured = financialYearStartMonth !== null;
   const defaultFY = fyConfigured ? getFYLabel(financialYearStartMonth!) : "";
@@ -317,7 +321,24 @@ export function MilestonePanel({
             </Button>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-4">
+            {/* Timeline visualization */}
+            <MilestoneTimeline
+              milestones={milestones}
+              financialYearStartDay={financialYearStartDay!}
+              financialYearStartMonth={financialYearStartMonth!}
+              budgetPreparationMonth={budgetPreparationMonth}
+              strategicPlanningWindowStart={strategicPlanningWindowStart}
+              strategicPlanningWindowEnd={strategicPlanningWindowEnd}
+              selectedFY={selectedFY}
+              onMilestoneClick={(ms) => handleExpandRow(ms)}
+            />
+
+            {/* Divider */}
+            <div className="border-t" />
+
+            {/* Milestone list */}
+            <div className="space-y-1">
             {milestones.map((ms) => (
               <div key={ms.id} className="rounded-md border">
                 {/* Row header */}
@@ -428,6 +449,7 @@ export function MilestonePanel({
                 )}
               </div>
             ))}
+            </div>
           </div>
         )}
       </CardContent>

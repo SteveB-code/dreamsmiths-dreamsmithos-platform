@@ -102,6 +102,53 @@ function categoryLabel(cat: string): string {
   return labels[cat] || cat;
 }
 
+function shortName(name: string): string {
+  const shorts: Record<string, string> = {
+    "Quarterly Product Report": "Report",
+    "Annual Product Report": "Annual Report",
+    "Annual Technical Review": "Tech Review",
+    "User Research / Feedback": "Research",
+    "Internal Roadmap Prep Workshop": "Roadmap Prep",
+    "Client Roadmap Workshop": "Client Roadmap",
+  };
+  return shorts[name] || name.split(" ").slice(0, 2).join(" ");
+}
+
+// ---------------------------------------------------------------------------
+// Non-linear timeline scaling
+// ---------------------------------------------------------------------------
+// The pre-planning-window period (where milestones cluster) gets more visual
+// space; the post-planning-window period (quieter) gets compressed.
+
+const PRE_WINDOW_VISUAL_SHARE = 0.7; // 70% of width for pre-window period
+const POST_WINDOW_VISUAL_SHARE = 0.3; // 30% for post-window period
+
+/**
+ * Build a function that maps a linear 0-100 position to a scaled position,
+ * giving more space to the period before the planning window ends.
+ */
+function buildScaler(
+  windowEndLinear: number | null,
+): (linearPos: number) => number {
+  // If no planning window configured, use linear mapping
+  if (windowEndLinear === null || windowEndLinear <= 0 || windowEndLinear >= 100) {
+    return (pos) => pos;
+  }
+
+  const boundary = windowEndLinear;
+  const visualBoundary = PRE_WINDOW_VISUAL_SHARE * 100;
+
+  return (linearPos: number) => {
+    if (linearPos <= boundary) {
+      // Pre-window: stretch
+      return (linearPos / boundary) * visualBoundary;
+    } else {
+      // Post-window: compress
+      return visualBoundary + ((linearPos - boundary) / (100 - boundary)) * (POST_WINDOW_VISUAL_SHARE * 100);
+    }
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -127,62 +174,120 @@ export function MilestoneTimeline({
 
   const totalDays = (fyEnd.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
 
-  // --- Month labels ---
-  const months: { label: string; position: number }[] = [];
-  for (let i = 0; i < 12; i++) {
-    const monthIndex = (financialYearStartMonth - 1 + i) % 12;
-    months.push({
-      label: MONTH_ABBR[monthIndex],
-      position: (i / 12) * 100,
-    });
+  // --- Helper: date → linear 0-100 position ---
+  function dateToLinear(date: Date): number {
+    const daysSinceStart = (date.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.min(100, (daysSinceStart / totalDays) * 100));
   }
 
-  // --- Today indicator ---
-  const today = new Date();
-  const todayDays = (today.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
-  const todayPosition = Math.max(0, Math.min(100, (todayDays / totalDays) * 100));
-  const todayInRange = today >= fyStart && today <= fyEnd;
-
-  // --- Strategic planning window ---
-  function monthToPosition(month: number): number {
+  // --- Helper: month number → linear 0-100 position ---
+  function monthToLinear(month: number): number {
     const monthsFromStart = ((month - financialYearStartMonth + 12) % 12);
     return (monthsFromStart / 12) * 100;
   }
 
-  let windowStartPos = 0;
-  let windowWidth = 0;
+  // --- Build the non-linear scaler based on planning window end ---
   const hasWindow = strategicPlanningWindowStart !== null && strategicPlanningWindowEnd !== null;
+  const windowEndLinear = hasWindow
+    ? monthToLinear(strategicPlanningWindowEnd!) + (1 / 12) * 100 // end of the window month
+    : null;
+  const scale = buildScaler(windowEndLinear);
 
-  if (hasWindow) {
-    windowStartPos = monthToPosition(strategicPlanningWindowStart!);
-    const windowEndPos = monthToPosition(strategicPlanningWindowEnd!);
-    if (windowEndPos >= windowStartPos) {
-      windowWidth = windowEndPos - windowStartPos + (1 / 12) * 100;
-    } else {
-      windowWidth = (100 - windowStartPos) + windowEndPos + (1 / 12) * 100;
-    }
-    windowWidth = Math.min(windowWidth, 100);
+  // --- Month labels (scaled) ---
+  const months: { label: string; position: number }[] = [];
+  for (let i = 0; i < 12; i++) {
+    const monthIndex = (financialYearStartMonth - 1 + i) % 12;
+    const linearPos = (i / 12) * 100;
+    months.push({
+      label: MONTH_ABBR[monthIndex],
+      position: scale(linearPos),
+    });
   }
 
-  const windowWraps = hasWindow && monthToPosition(strategicPlanningWindowEnd!) < monthToPosition(strategicPlanningWindowStart!);
+  // --- Today indicator (scaled) ---
+  const today = new Date();
+  const todayLinear = dateToLinear(today);
+  const todayPosition = scale(todayLinear);
+  const todayInRange = today >= fyStart && today <= fyEnd;
 
-  // --- Budget preparation diamond ---
-  let budgetPosition = 0;
+  // --- Strategic planning window band (scaled) ---
+  let windowStartScaled = 0;
+  let windowEndScaled = 0;
+  if (hasWindow) {
+    const winStartLinear = monthToLinear(strategicPlanningWindowStart!);
+    const winEndLinear = monthToLinear(strategicPlanningWindowEnd!) + (1 / 12) * 100;
+
+    const wraps = monthToLinear(strategicPlanningWindowEnd!) < monthToLinear(strategicPlanningWindowStart!);
+
+    if (!wraps) {
+      windowStartScaled = scale(winStartLinear);
+      windowEndScaled = scale(winEndLinear);
+    } else {
+      // Wrapping is rare with this layout but handle it
+      windowStartScaled = scale(winStartLinear);
+      windowEndScaled = 100;
+    }
+  }
+  const windowWidthScaled = windowEndScaled - windowStartScaled;
+
+  // Handle wrapping planning window
+  const windowWraps = hasWindow && monthToLinear(strategicPlanningWindowEnd!) < monthToLinear(strategicPlanningWindowStart!);
+  let windowWrapEndScaled = 0;
+  if (windowWraps) {
+    const wrapEndLinear = monthToLinear(strategicPlanningWindowEnd!) + (1 / 12) * 100;
+    windowWrapEndScaled = scale(wrapEndLinear);
+  }
+
+  // --- Budget preparation diamond (scaled) ---
+  let budgetPositionScaled = 0;
   if (budgetPreparationMonth) {
     const monthsFromStart = ((budgetPreparationMonth - financialYearStartMonth + 12) % 12);
-    budgetPosition = ((monthsFromStart + 0.5) / 12) * 100;
+    const linearPos = ((monthsFromStart + 0.5) / 12) * 100;
+    budgetPositionScaled = scale(linearPos);
   }
 
-  // --- Plottable milestones with positions ---
+  // --- Plottable milestones with scaled positions ---
   const plottable = milestones.filter((m) => m.dueDate);
   const positioned = plottable
     .map((m) => {
       const date = new Date(m.dueDate!);
-      const daysSinceStart = (date.getTime() - fyStart.getTime()) / (1000 * 60 * 60 * 24);
-      const position = Math.max(0, Math.min(100, (daysSinceStart / totalDays) * 100));
+      const linearPos = dateToLinear(date);
+      const position = scale(linearPos);
       return { ...m, position };
     })
     .sort((a, b) => a.position - b.position);
+
+  // --- Stagger labels above/below to prevent overlap ---
+  // Greedy placement: check actual scaled distance between labels
+  const MIN_GAP = 7; // minimum % gap between label centers on the same row
+  const staggered = (() => {
+    let lastAbovePos = -100;
+    let lastBelowPos = -100;
+
+    return positioned.map((ms) => {
+      const aboveGap = ms.position - lastAbovePos;
+      const belowGap = ms.position - lastBelowPos;
+
+      let above: boolean;
+      if (belowGap >= MIN_GAP && aboveGap >= MIN_GAP) {
+        above = false; // prefer below when both fit
+      } else if (belowGap >= MIN_GAP) {
+        above = false;
+      } else if (aboveGap >= MIN_GAP) {
+        above = true;
+      } else {
+        above = aboveGap > belowGap;
+      }
+
+      if (above) {
+        lastAbovePos = ms.position;
+      } else {
+        lastBelowPos = ms.position;
+      }
+
+      return { ...ms, labelAbove: above };
+    });
+  })();
 
   return (
     <div className="relative px-4">
@@ -191,8 +296,8 @@ export function MilestoneTimeline({
         <div
           className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/30 rounded"
           style={{
-            left: `calc(${windowStartPos}% + 16px)`,
-            width: `${windowWidth}%`,
+            left: `calc(${windowStartScaled}% + 16px)`,
+            width: `${windowWidthScaled}%`,
             top: "0",
             bottom: "20px",
           }}
@@ -207,8 +312,8 @@ export function MilestoneTimeline({
           <div
             className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/30 rounded-l"
             style={{
-              left: `calc(${windowStartPos}% + 16px)`,
-              width: `${100 - windowStartPos}%`,
+              left: `calc(${windowStartScaled}% + 16px)`,
+              width: `${100 - windowStartScaled}%`,
               top: "0",
               bottom: "20px",
             }}
@@ -221,7 +326,7 @@ export function MilestoneTimeline({
             className="absolute bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-800/30 rounded-r"
             style={{
               left: "16px",
-              width: `${monthToPosition(strategicPlanningWindowEnd!) + (1 / 12) * 100}%`,
+              width: `${windowWrapEndScaled}%`,
               top: "0",
               bottom: "20px",
             }}
@@ -229,50 +334,61 @@ export function MilestoneTimeline({
         </>
       )}
 
-      {/* ── Spacer for planning window label ── */}
-      <div className="h-8" />
+      {/* ── Above-line labels zone ── */}
+      <div className="relative h-10 mx-4">
+        {/* Today marker label */}
+        {todayInRange && (
+          <div
+            className="absolute bottom-1 -translate-x-1/2 z-20"
+            style={{ left: `${todayPosition}%` }}
+          >
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-background px-0.5">
+              Today
+            </span>
+          </div>
+        )}
+
+        {/* Above-line milestone labels */}
+        {staggered
+          .filter((ms) => ms.labelAbove)
+          .map((ms) => (
+            <div
+              key={ms.id + "-label-above"}
+              className="absolute bottom-1 -translate-x-1/2"
+              style={{ left: `${ms.position}%` }}
+            >
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                {shortName(ms.typeName)}
+              </span>
+            </div>
+          ))}
+      </div>
 
       {/* ── The timeline line ── */}
       <div className="relative h-px bg-border mx-4">
         {/* Today vertical line */}
         {todayInRange && (
-          <>
-            <div
-              className="absolute w-px bg-emerald-500/50"
-              style={{
-                left: `${todayPosition}%`,
-                top: "-28px",
-                bottom: "-20px",
-              }}
-            />
-            <div
-              className="absolute -translate-x-1/2"
-              style={{
-                left: `${todayPosition}%`,
-                top: "-26px",
-              }}
-            >
-              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-background px-1">
-                Today
-              </span>
-            </div>
-          </>
+          <div
+            className="absolute w-px bg-emerald-500/40"
+            style={{
+              left: `${todayPosition}%`,
+              top: "-40px",
+              bottom: "-28px",
+            }}
+          />
         )}
 
         {/* Budget deadline diamond */}
         {budgetPreparationMonth && (
           <div
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10"
-            style={{ left: `${budgetPosition}%` }}
+            style={{ left: `${budgetPositionScaled}%` }}
             onMouseEnter={() => setHoveredId("budget")}
             onMouseLeave={() => setHoveredId(null)}
           >
             <div className="h-3.5 w-3.5 rotate-45 bg-blue-500 border-2 border-white dark:border-gray-900 cursor-default" />
-            <span className="absolute top-5 left-1/2 -translate-x-1/2 text-[10px] font-medium text-blue-500 whitespace-nowrap">
-              Budget
-            </span>
             {hoveredId === "budget" && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 bg-popover border shadow-md rounded-lg p-3 min-w-[180px] z-50 pointer-events-none">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-popover border shadow-md rounded-lg p-3 min-w-[180px] z-50 pointer-events-none">
                 <p className="text-sm font-medium">Budget Preparation Deadline</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {MONTH_ABBR[budgetPreparationMonth - 1]} — Client needs budget inputs finalised
@@ -283,7 +399,7 @@ export function MilestoneTimeline({
         )}
 
         {/* Milestone markers */}
-        {positioned.map((ms) => {
+        {staggered.map((ms) => {
           const isHovered = hoveredId === ms.id;
           return (
             <div
@@ -294,9 +410,14 @@ export function MilestoneTimeline({
               onMouseLeave={() => setHoveredId(null)}
               onClick={() => onMilestoneClick(ms)}
             >
-              {/* The dot — larger hit area with visible ring on hover */}
+              {/* Stem line to label */}
               <div
-                className={`h-4 w-4 rounded-full border-2 border-white dark:border-gray-900 ${statusColor(ms.status)} transition-all ${isHovered ? `scale-[1.4] ring-4 ${statusRing(ms.status)}` : ""}`}
+                className={`absolute left-1/2 -translate-x-1/2 w-px bg-border/60 ${ms.labelAbove ? "bottom-full h-[18px]" : "top-full h-[18px]"}`}
+              />
+
+              {/* The dot */}
+              <div
+                className={`h-4 w-4 rounded-full border-2 border-white dark:border-gray-900 ${statusColor(ms.status)} transition-all ${isHovered ? `scale-[1.3] ring-4 ${statusRing(ms.status)}` : ""}`}
               >
                 {ms.status === "complete" && (
                   <svg
@@ -313,16 +434,12 @@ export function MilestoneTimeline({
 
               {/* Hover tooltip */}
               {isHovered && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-popover border shadow-md rounded-lg p-3 min-w-[220px] z-50 pointer-events-none">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 bg-popover border shadow-md rounded-lg p-3 min-w-[220px] z-50 pointer-events-none">
                   <p className="text-sm font-medium">{ms.typeName}</p>
                   <div className="flex items-center gap-2 mt-1.5">
                     <StatusDot status={ms.status} />
-                    <span className="text-xs font-medium">
-                      {statusLabel(ms.status)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      · {categoryLabel(ms.typeCategory)}
-                    </span>
+                    <span className="text-xs font-medium">{statusLabel(ms.status)}</span>
+                    <span className="text-xs text-muted-foreground">· {categoryLabel(ms.typeCategory)}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Due: {ms.dueDate ? formatDate(ms.dueDate) : "Not set"}
@@ -339,12 +456,42 @@ export function MilestoneTimeline({
         })}
       </div>
 
+      {/* ── Below-line labels zone ── */}
+      <div className="relative h-10 mx-4">
+        {/* Below-line milestone labels */}
+        {staggered
+          .filter((ms) => !ms.labelAbove)
+          .map((ms) => (
+            <div
+              key={ms.id + "-label-below"}
+              className="absolute top-4 -translate-x-1/2"
+              style={{ left: `${ms.position}%` }}
+            >
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                {shortName(ms.typeName)}
+              </span>
+            </div>
+          ))}
+
+        {/* Budget label (below) */}
+        {budgetPreparationMonth && (
+          <div
+            className="absolute top-4 -translate-x-1/2"
+            style={{ left: `${budgetPositionScaled}%` }}
+          >
+            <span className="text-[10px] font-medium text-blue-500 whitespace-nowrap">
+              Budget
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* ── Month labels ── */}
-      <div className="relative h-7 mx-4 mt-3">
+      <div className="relative h-6 mx-4 border-t border-border/40">
         {months.map((m) => (
           <span
             key={m.label + m.position}
-            className="absolute text-[11px] text-muted-foreground/60 -translate-x-1/2"
+            className="absolute text-[11px] text-muted-foreground/60 -translate-x-1/2 pt-1"
             style={{ left: `${m.position}%` }}
           >
             {m.label}

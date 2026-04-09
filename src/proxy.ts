@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const publicPaths = ["/", "/login", "/api"];
+const publicPaths = ["/", "/login", "/api/auth", "/api"];
 
 export async function proxy(request: NextRequest) {
   // DEV BYPASS: skip auth check until Microsoft OAuth is configured

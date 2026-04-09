@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
 
   try {
@@ -20,21 +19,24 @@ export async function GET() {
     const data = await response.json();
 
     if (!data.url) {
-      return NextResponse.json({ error: "No redirect URL returned" }, { status: 500 });
+      return Response.json({ error: "No redirect URL", data }, { status: 500 });
     }
 
-    // Build redirect response with cookies from BetterAuth
-    const redirectResponse = NextResponse.redirect(data.url);
-
-    // Forward all Set-Cookie headers (contains the state cookie needed for callback)
+    // Build a manual redirect with the state cookie
     const setCookieHeader = response.headers.get("set-cookie");
-    if (setCookieHeader) {
-      redirectResponse.headers.set("set-cookie", setCookieHeader);
-    }
 
-    return redirectResponse;
+    return new Response(
+      `<html><head><meta http-equiv="refresh" content="0;url=${data.url}"></head><body>Redirecting to Microsoft...</body></html>`,
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html",
+          ...(setCookieHeader ? { "Set-Cookie": setCookieHeader } : {}),
+        },
+      }
+    );
   } catch (error) {
-    return NextResponse.json(
+    return Response.json(
       { error: "Login failed", details: String(error) },
       { status: 500 }
     );

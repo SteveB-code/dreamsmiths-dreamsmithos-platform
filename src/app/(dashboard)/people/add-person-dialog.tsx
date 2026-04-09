@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TechSelect } from "@/components/tech-select";
 
 interface AddPersonDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ export function AddPersonDialog({
 }: AddPersonDialogProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [technologyIds, setTechnologyIds] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,10 +42,12 @@ export function AddPersonDialog({
 
     const formData = new FormData(e.currentTarget);
     const body = {
-      fullName: formData.get("fullName"),
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
       email: formData.get("email"),
       phone: formData.get("phone") || null,
       type: formData.get("type"),
+      technologyIds,
     };
 
     const res = await fetch("/api/people", {
@@ -60,6 +64,7 @@ export function AddPersonDialog({
     }
 
     setSaving(false);
+    setTechnologyIds([]);
     onSuccess();
   };
 
@@ -70,9 +75,15 @@ export function AddPersonDialog({
           <DialogTitle>Add Person</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input id="fullName" name="fullName" required />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input id="firstName" name="firstName" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input id="lastName" name="lastName" required />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -93,6 +104,13 @@ export function AddPersonDialog({
                 <SelectItem value="employee">Employee</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Technologies</Label>
+            <TechSelect
+              selectedIds={technologyIds}
+              onChange={setTechnologyIds}
+            />
           </div>
           {error && (
             <p className="text-sm text-destructive">{error}</p>

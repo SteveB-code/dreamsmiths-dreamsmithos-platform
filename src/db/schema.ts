@@ -129,7 +129,8 @@ export const verification = pgTable("verification", {
 export const person = pgTable("person", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
-  fullName: text("full_name").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
   address: text("address"),
@@ -167,6 +168,33 @@ export const platformAssignment = pgTable("platform_assignment", {
   isActive: boolean("is_active").notNull().default(true),
   dateAssigned: timestamp("date_assigned").defaultNow(),
   dateRemoved: timestamp("date_removed"),
+});
+
+export const technology = pgTable("technology", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  category: text("category").notNull(), // "frontend", "backend", "mobile", "cloud", "database", "other"
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const personTechnology = pgTable("person_technology", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  personId: uuid("person_id")
+    .notNull()
+    .references(() => person.id, { onDelete: "cascade" }),
+  technologyId: uuid("technology_id")
+    .notNull()
+    .references(() => technology.id, { onDelete: "cascade" }),
+});
+
+export const platformTechnology = pgTable("platform_technology", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  platformId: uuid("platform_id")
+    .notNull()
+    .references(() => platform.id, { onDelete: "cascade" }),
+  technologyId: uuid("technology_id")
+    .notNull()
+    .references(() => technology.id, { onDelete: "cascade" }),
 });
 
 export const document = pgTable("document", {

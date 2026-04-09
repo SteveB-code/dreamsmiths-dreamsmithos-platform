@@ -21,7 +21,8 @@ import {
 
 interface Person {
   id: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   type: string;
 }
@@ -111,7 +112,7 @@ export function AssignPersonDialog({
               <SelectContent>
                 {people.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.fullName} ({p.email})
+                    {p.firstName} {p.lastName} ({p.email})
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -18,7 +18,8 @@ import { AddPersonDialog } from "./add-person-dialog";
 
 interface Person {
   id: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string | null;
   type: "contractor" | "employee";
@@ -101,7 +102,7 @@ export function PeopleList() {
                       href={`/people/${p.id}`}
                       className="font-medium hover:underline"
                     >
-                      {p.fullName}
+                      {p.firstName} {p.lastName}
                     </Link>
                   </TableCell>
                   <TableCell className="text-muted-foreground">

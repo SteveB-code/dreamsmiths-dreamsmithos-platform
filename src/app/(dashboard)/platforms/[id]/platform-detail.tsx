@@ -18,15 +18,23 @@ import {
 import { ArrowLeft, Save, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { AssignPersonDialog } from "./assign-person-dialog";
+import { TechSelect } from "@/components/tech-select";
 
 interface TeamMember {
   assignmentId: string;
   personId: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   type: "contractor" | "employee";
   roleOnPlatform: string;
   isActive: boolean;
+}
+
+interface Technology {
+  id: string;
+  name: string;
+  category: string;
 }
 
 interface PlatformData {
@@ -39,6 +47,7 @@ interface PlatformData {
   description: string | null;
   dateOnboarded: string;
   team: TeamMember[];
+  technologies: Technology[];
 }
 
 export function PlatformDetail({ platformId }: { platformId: string }) {
@@ -48,6 +57,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [technologyIds, setTechnologyIds] = useState<string[]>([]);
 
   const fetchPlatform = useCallback(async () => {
     try {
@@ -55,6 +65,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
       if (!res.ok) throw new Error("Not found");
       const data = await res.json();
       setPlatform(data);
+      setTechnologyIds(data.technologies?.map((t: Technology) => t.id) || []);
     } catch {
       setError("Platform not found");
     } finally {
@@ -77,8 +88,8 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
       clientOrg: formData.get("clientOrg"),
       status: formData.get("status"),
       retainerTier: formData.get("retainerTier") || null,
-      techStack: formData.get("techStack") || null,
       description: formData.get("description") || null,
+      technologyIds,
     };
 
     const res = await fetch(`/api/platforms/${platformId}`, {
@@ -193,11 +204,10 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
                 />
               </div>
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="techStack">Tech Stack</Label>
-                <Input
-                  id="techStack"
-                  name="techStack"
-                  defaultValue={platform.techStack || ""}
+                <Label>Tech Stack</Label>
+                <TechSelect
+                  selectedIds={technologyIds}
+                  onChange={setTechnologyIds}
                 />
               </div>
               <div className="col-span-2 space-y-2">
@@ -264,7 +274,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
                       href={`/people/${member.personId}`}
                       className="font-medium hover:underline"
                     >
-                      {member.fullName}
+                      {member.firstName} {member.lastName}
                     </Link>
                     <p className="text-sm text-muted-foreground">
                       {member.email}

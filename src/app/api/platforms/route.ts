@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { platform } from "@/db/schema";
+import { platform, platformTechnology } from "@/db/schema";
 import { desc, ilike, eq, or } from "drizzle-orm";
 
 // GET /api/platforms — list all platforms, with optional search
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body = await request.json();
 
-  const { name, clientOrg, retainerTier, techStack, description } = body;
+  const { name, clientOrg, retainerTier, description, technologyIds } = body;
 
   if (!name || !clientOrg) {
     return NextResponse.json(
@@ -55,10 +55,19 @@ export async function POST(request: NextRequest) {
       name,
       clientOrg,
       retainerTier: retainerTier || null,
-      techStack: techStack || null,
       description: description || null,
     })
     .returning();
+
+  // Link technologies if provided
+  if (technologyIds?.length) {
+    await db.insert(platformTechnology).values(
+      technologyIds.map((tid: string) => ({
+        platformId: newPlatform.id,
+        technologyId: tid,
+      })),
+    );
+  }
 
   return NextResponse.json(newPlatform, { status: 201 });
 }

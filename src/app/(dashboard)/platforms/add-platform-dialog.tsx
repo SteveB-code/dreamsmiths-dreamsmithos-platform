@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { TechSelect } from "@/components/tech-select";
 
 interface AddPlatformDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export function AddPlatformDialog({
 }: AddPlatformDialogProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [technologyIds, setTechnologyIds] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,8 +39,8 @@ export function AddPlatformDialog({
       name: formData.get("name"),
       clientOrg: formData.get("clientOrg"),
       retainerTier: formData.get("retainerTier") || null,
-      techStack: formData.get("techStack") || null,
       description: formData.get("description") || null,
+      technologyIds,
     };
 
     const res = await fetch("/api/platforms", {
@@ -55,6 +57,7 @@ export function AddPlatformDialog({
     }
 
     setSaving(false);
+    setTechnologyIds([]);
     onSuccess();
   };
 
@@ -87,11 +90,10 @@ export function AddPlatformDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="techStack">Tech Stack</Label>
-            <Input
-              id="techStack"
-              name="techStack"
-              placeholder="e.g. Next.js, Laravel"
+            <Label>Tech Stack</Label>
+            <TechSelect
+              selectedIds={technologyIds}
+              onChange={setTechnologyIds}
             />
           </div>
           <div className="space-y-2">

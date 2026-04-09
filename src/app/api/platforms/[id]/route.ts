@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { platform, platformAssignment, person } from "@/db/schema";
+import {
+  platform,
+  platformAssignment,
+  person,
+  platformTechnology,
+  technology,
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-// GET /api/platforms/:id — get a single platform with team
+// GET /api/platforms/:id — get a single platform with team and technologies
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -28,7 +34,8 @@ export async function GET(
     .select({
       assignmentId: platformAssignment.id,
       personId: person.id,
-      fullName: person.fullName,
+      firstName: person.firstName,
+      lastName: person.lastName,
       email: person.email,
       type: person.type,
       roleOnPlatform: platformAssignment.roleOnPlatform,
@@ -38,7 +45,21 @@ export async function GET(
     .innerJoin(person, eq(platformAssignment.personId, person.id))
     .where(eq(platformAssignment.platformId, id));
 
-  return NextResponse.json({ ...found, team });
+  // Get technologies
+  const techs = await db
+    .select({
+      id: technology.id,
+      name: technology.name,
+      category: technology.category,
+    })
+    .from(platformTechnology)
+    .innerJoin(
+      technology,
+      eq(platformTechnology.technologyId, technology.id),
+    )
+    .where(eq(platformTechnology.platformId, id));
+
+  return NextResponse.json({ ...found, team, technologies: techs });
 }
 
 // PATCH /api/platforms/:id — update a platform
@@ -49,7 +70,7 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
 
-  const { name, clientOrg, status, retainerTier, techStack, description } =
+  const { name, clientOrg, status, retainerTier, description, technologyIds } =
     body;
 
   const [updated] = await db
@@ -59,7 +80,6 @@ export async function PATCH(
       ...(clientOrg !== undefined && { clientOrg }),
       ...(status !== undefined && { status }),
       ...(retainerTier !== undefined && { retainerTier }),
-      ...(techStack !== undefined && { techStack }),
       ...(description !== undefined && { description }),
       updatedAt: new Date(),
     })
@@ -71,6 +91,22 @@ export async function PATCH(
       { error: "Platform not found" },
       { status: 404 },
     );
+  }
+
+  // Update technologies if provided
+  if (technologyIds !== undefined) {
+    await db
+      .delete(platformTechnology)
+      .where(eq(platformTechnology.platformId, id));
+
+    if (technologyIds.length > 0) {
+      await db.insert(platformTechnology).values(
+        technologyIds.map((tid: string) => ({
+          platformId: id,
+          technologyId: tid,
+        })),
+      );
+    }
   }
 
   return NextResponse.json(updated);

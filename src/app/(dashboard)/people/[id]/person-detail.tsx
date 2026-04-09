@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { TechSelect } from "@/components/tech-select";
 
 interface PlatformAssignment {
   assignmentId: string;
@@ -27,9 +27,16 @@ interface PlatformAssignment {
   isActive: boolean;
 }
 
+interface Technology {
+  id: string;
+  name: string;
+  category: string;
+}
+
 interface PersonData {
   id: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string | null;
   address: string | null;
@@ -37,6 +44,7 @@ interface PersonData {
   status: "active" | "inactive" | "offboarded";
   dateJoined: string;
   platforms: PlatformAssignment[];
+  technologies: Technology[];
 }
 
 export function PersonDetail({ personId }: { personId: string }) {
@@ -45,6 +53,7 @@ export function PersonDetail({ personId }: { personId: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [technologyIds, setTechnologyIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetch(`/api/people/${personId}`)
@@ -52,7 +61,10 @@ export function PersonDetail({ personId }: { personId: string }) {
         if (!res.ok) throw new Error("Not found");
         return res.json();
       })
-      .then(setPerson)
+      .then((data) => {
+        setPerson(data);
+        setTechnologyIds(data.technologies?.map((t: Technology) => t.id) || []);
+      })
       .catch(() => setError("Person not found"))
       .finally(() => setLoading(false));
   }, [personId]);
@@ -64,12 +76,14 @@ export function PersonDetail({ personId }: { personId: string }) {
 
     const formData = new FormData(e.currentTarget);
     const body = {
-      fullName: formData.get("fullName"),
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
       email: formData.get("email"),
       phone: formData.get("phone") || null,
       address: formData.get("address") || null,
       type: formData.get("type"),
       status: formData.get("status"),
+      technologyIds,
     };
 
     const res = await fetch(`/api/people/${personId}`, {
@@ -119,7 +133,7 @@ export function PersonDetail({ personId }: { personId: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>{person.fullName}</span>
+            <span>{person.firstName} {person.lastName}</span>
             <div className="flex gap-2">
               <Badge variant={person.type === "employee" ? "default" : "secondary"}>
                 {person.type}
@@ -142,11 +156,20 @@ export function PersonDetail({ personId }: { personId: string }) {
           <form onSubmit={handleSave} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="fullName"
-                  name="fullName"
-                  defaultValue={person.fullName}
+                  id="firstName"
+                  name="firstName"
+                  defaultValue={person.firstName}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  defaultValue={person.lastName}
                   required
                 />
               </div>
@@ -201,6 +224,14 @@ export function PersonDetail({ personId }: { personId: string }) {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Technologies</Label>
+              <TechSelect
+                selectedIds={technologyIds}
+                onChange={setTechnologyIds}
+              />
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

@@ -1,13 +1,6 @@
-"use client";
-
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const handleMicrosoftLogin = () => {
-    // Full page navigation — ensures cookies are set properly
-    window.location.href = "/api/auth/microsoft";
-  };
-
   return (
     <div className="flex flex-1 flex-col items-center justify-center">
       <div className="flex flex-col items-center gap-8 w-full max-w-sm">
@@ -23,11 +16,9 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <Button
-          onClick={handleMicrosoftLogin}
-          className="w-full h-11 gap-3"
-          variant="outline"
-          disabled={loading}
+        <Link
+          href="/api/auth/ms-login"
+          className="inline-flex items-center justify-center gap-3 w-full h-11 rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
         >
           <svg viewBox="0 0 21 21" className="h-5 w-5" aria-hidden="true">
             <rect x="1" y="1" width="9" height="9" fill="#f25022" />
@@ -36,7 +27,7 @@ export default function LoginPage() {
             <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
           </svg>
           Sign in with Microsoft
-        </Button>
+        </Link>
       </div>
     </div>
   );

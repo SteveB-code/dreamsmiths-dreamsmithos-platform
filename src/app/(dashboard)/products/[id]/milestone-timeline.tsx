@@ -335,7 +335,7 @@ export function MilestoneTimeline({
       )}
 
       {/* ── Above-line spacer — reserves vertical space for above labels + Today ── */}
-      <div style={{ height: "48px" }} className="mx-4" />
+      <div style={{ height: "68px" }} className="mx-4" />
 
       {/* ── The timeline line — everything is positioned from here ── */}
       <div className="relative h-px bg-border mx-4">
@@ -345,17 +345,17 @@ export function MilestoneTimeline({
             className="absolute w-px bg-emerald-500/40"
             style={{
               left: `${todayPosition}%`,
-              top: "-48px",
+              top: "-68px",
               bottom: "-28px",
             }}
           />
         )}
 
-        {/* Today label — positioned 44px above the line */}
+        {/* Today label — positioned high above the line */}
         {todayInRange && (
           <div
-            className="absolute -translate-x-1/2 z-20"
-            style={{ left: `${todayPosition}%`, top: "-48px" }}
+            className="absolute z-20"
+            style={{ left: `${todayPosition}%`, top: "-64px", transform: "translateX(-50%)" }}
           >
             <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
               Today
@@ -363,14 +363,14 @@ export function MilestoneTimeline({
           </div>
         )}
 
-        {/* Above-line milestone labels — positioned 30px above the line */}
+        {/* Above-line milestone labels — positioned well above the dots */}
         {staggered
           .filter((ms) => ms.labelAbove)
           .map((ms) => (
             <div
               key={ms.id + "-label-above"}
-              className="absolute -translate-x-1/2"
-              style={{ left: `${ms.position}%`, top: "-30px" }}
+              className="absolute"
+              style={{ left: `${ms.position}%`, top: "-44px", transform: "translateX(-50%)" }}
             >
               <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                 {shortName(ms.typeName)}
@@ -414,7 +414,7 @@ export function MilestoneTimeline({
               {ms.labelAbove && (
                 <div
                   className="absolute left-1/2 -translate-x-1/2 w-px bg-border/60"
-                  style={{ bottom: "100%", height: "22px" }}
+                  style={{ bottom: "100%", height: "36px" }}
                 />
               )}
               {!ms.labelAbove && (

@@ -280,7 +280,7 @@ export function MilestonePanel({
   const fyOptions = fyConfigured ? buildFYOptions(financialYearStartMonth!) : [];
 
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">Product Milestones</CardTitle>
@@ -300,7 +300,7 @@ export function MilestonePanel({
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-visible">
         {!fyConfigured ? (
           <p className="text-sm text-muted-foreground">
             Configure the client&apos;s financial year above to enable milestones.

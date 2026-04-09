@@ -290,7 +290,7 @@ export function MilestoneTimeline({
   })();
 
   return (
-    <div className="relative px-4">
+    <div className="relative px-4 overflow-visible">
       {/* ── Planning window band ── */}
       {hasWindow && !windowWraps && (
         <div
@@ -334,27 +334,28 @@ export function MilestoneTimeline({
         </>
       )}
 
-      {/* ── Above-line labels zone ── */}
-      <div className="relative h-10 mx-4">
-        {/* Today marker label */}
-        {todayInRange && (
+      {/* ── Today label (own row above everything) ── */}
+      {todayInRange && (
+        <div className="relative h-5 mx-4">
           <div
-            className="absolute top-0 -translate-x-1/2 z-20"
+            className="absolute bottom-0 -translate-x-1/2 z-20"
             style={{ left: `${todayPosition}%` }}
           >
-            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-background px-0.5">
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
               Today
             </span>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Above-line milestone labels */}
+      {/* ── Above-line milestone labels zone ── */}
+      <div className="relative h-6 mx-4">
         {staggered
           .filter((ms) => ms.labelAbove)
           .map((ms) => (
             <div
               key={ms.id + "-label-above"}
-              className="absolute top-0 -translate-x-1/2"
+              className="absolute bottom-0 -translate-x-1/2"
               style={{ left: `${ms.position}%` }}
             >
               <span className="text-[10px] text-muted-foreground whitespace-nowrap">
@@ -372,7 +373,7 @@ export function MilestoneTimeline({
             className="absolute w-px bg-emerald-500/40"
             style={{
               left: `${todayPosition}%`,
-              top: "-40px",
+              top: "-52px",
               bottom: "-28px",
             }}
           />

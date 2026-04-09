@@ -102,6 +102,27 @@ const CATEGORY_LABELS: Record<string, string> = {
   general: "General",
 };
 
+function getYouTubeThumbnail(url: string | null): string | null {
+  if (!url) return null;
+  // YouTube URL patterns: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+  let videoId: string | null = null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("youtube.com")) {
+      videoId = parsed.searchParams.get("v");
+      if (!videoId && parsed.pathname.startsWith("/embed/")) {
+        videoId = parsed.pathname.split("/embed/")[1]?.split(/[?&]/)[0] || null;
+      }
+    } else if (parsed.hostname === "youtu.be") {
+      videoId = parsed.pathname.slice(1).split(/[?&]/)[0] || null;
+    }
+  } catch {
+    return null;
+  }
+  if (!videoId) return null;
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
 function mapRoleToAudience(role: string): string {
   switch (role) {
     case "admin":
@@ -279,6 +300,7 @@ export function PlaybookBrowser() {
             const config = CONTENT_TYPE_CONFIG[item.contentType] || CONTENT_TYPE_CONFIG.guide;
             const Icon = config.icon;
             const isVideo = item.contentType === "video";
+            const thumbnail = isVideo ? getYouTubeThumbnail(item.externalUrl) : null;
 
             return (
               <button
@@ -288,8 +310,15 @@ export function PlaybookBrowser() {
               >
                 {/* Video thumbnail area */}
                 {isVideo && (
-                  <div className="relative bg-slate-900 flex items-center justify-center h-36">
-                    <div className="rounded-full bg-white/20 p-3 group-hover:bg-white/30 transition-colors">
+                  <div className="relative bg-slate-900 flex items-center justify-center h-36 overflow-hidden">
+                    {thumbnail && (
+                      <img
+                        src={thumbnail}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                      />
+                    )}
+                    <div className="relative rounded-full bg-black/40 p-3 group-hover:bg-black/50 transition-colors backdrop-blur-sm">
                       <PlayCircle className="h-8 w-8 text-white" />
                     </div>
                     <div className="absolute top-2 right-2">

@@ -4,7 +4,7 @@ import { PlatformList } from "./platform-list";
 export default function PlatformsPage() {
   return (
     <div>
-      <Header title="Platforms" />
+      <Header title="Products" />
       <div className="p-6">
         <PlatformList />
       </div>

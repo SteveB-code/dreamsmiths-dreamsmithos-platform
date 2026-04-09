@@ -65,11 +65,11 @@ export function AddPlatformDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Platform</DialogTitle>
+          <DialogTitle>Add Product</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Platform Name</Label>
+            <Label htmlFor="name">Product Name</Label>
             <Input id="name" name="name" required placeholder="e.g. Client Portal" />
           </div>
           <div className="space-y-2">
@@ -102,7 +102,7 @@ export function AddPlatformDialog({
               id="description"
               name="description"
               rows={2}
-              placeholder="Brief description of the platform"
+              placeholder="Brief description of the product"
             />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
@@ -115,7 +115,7 @@ export function AddPlatformDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Adding..." : "Add Platform"}
+              {saving ? "Adding..." : "Add Product"}
             </Button>
           </DialogFooter>
         </form>

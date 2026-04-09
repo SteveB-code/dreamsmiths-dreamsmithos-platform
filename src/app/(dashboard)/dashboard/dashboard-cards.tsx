@@ -25,7 +25,7 @@ const primaryCards = [
 const secondaryCards = [
   { key: "totalPeople", label: "People", sub: "Active team members", icon: Users, href: "/people" },
   { key: "contractors", label: "Contractors", sub: "External contractors", icon: Briefcase, href: "/people" },
-  { key: "activePlatforms", label: "Platforms", sub: "Client platforms managed", icon: Monitor, href: "/platforms" },
+  { key: "activePlatforms", label: "Products", sub: "Client products managed", icon: Monitor, href: "/products" },
 ] as const;
 
 export function DashboardCards() {

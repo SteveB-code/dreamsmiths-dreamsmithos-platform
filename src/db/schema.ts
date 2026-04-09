@@ -161,6 +161,12 @@ export const platform = pgTable("platform", {
   retainerTier: text("retainer_tier"),
   techStack: text("tech_stack"),
   description: text("description"),
+  financialYearStartDay: integer("financial_year_start_day"), // 1-31
+  financialYearStartMonth: integer("financial_year_start_month"), // 1-12
+  budgetPreparationMonth: integer("budget_preparation_month"), // 1-12
+  strategicPlanningWindowStart: integer("strategic_planning_window_start"), // 1-12
+  strategicPlanningWindowEnd: integer("strategic_planning_window_end"), // 1-12
+  planningCycleNotes: text("planning_cycle_notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -238,6 +244,74 @@ export const playbookItem = pgTable("playbook_item", {
   // Ordering and metadata
   sortOrder: integer("sort_order").notNull().default(0),
   createdBy: text("created_by").references(() => user.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================================
+// Product Milestones tables
+// ============================================================
+
+export const milestoneCategoryEnum = pgEnum("milestone_category", [
+  "reporting",
+  "client",
+  "internal",
+]);
+
+export const milestoneFrequencyEnum = pgEnum("milestone_frequency", [
+  "quarterly",
+  "annual",
+]);
+
+export const milestoneSchedulingRuleEnum = pgEnum("milestone_scheduling_rule", [
+  "auto_quarterly",
+  "auto_annual",
+  "manual",
+]);
+
+export const milestoneArtifactModeEnum = pgEnum("milestone_artifact_mode", [
+  "single",
+  "multiple",
+]);
+
+export const milestoneStatusEnum = pgEnum("milestone_status", [
+  "scheduled",
+  "upcoming",
+  "due",
+  "overdue",
+  "complete",
+]);
+
+export const milestoneType = pgTable("milestone_type", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  category: milestoneCategoryEnum("category").notNull(),
+  frequency: milestoneFrequencyEnum("frequency").notNull(),
+  defaultOwnerRole: text("default_owner_role").notNull(), // e.g. "Product Lead", "Architect"
+  artifactRequired: boolean("artifact_required").notNull().default(true),
+  artifactMode: milestoneArtifactModeEnum("artifact_mode").notNull().default("single"),
+  schedulingRule: milestoneSchedulingRuleEnum("scheduling_rule").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const milestone = pgTable("milestone", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  platformId: uuid("platform_id")
+    .notNull()
+    .references(() => platform.id, { onDelete: "cascade" }),
+  milestoneTypeId: uuid("milestone_type_id")
+    .notNull()
+    .references(() => milestoneType.id, { onDelete: "cascade" }),
+  financialYear: text("financial_year").notNull(), // e.g. "FY 2026/27"
+  status: milestoneStatusEnum("status").notNull().default("scheduled"),
+  dueDate: timestamp("due_date"),
+  completedDate: timestamp("completed_date"),
+  completedBy: text("completed_by").references(() => user.id),
+  completedLate: boolean("completed_late").notNull().default(false),
+  ownerPersonId: uuid("owner_person_id").references(() => person.id, { onDelete: "set null" }),
+  notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

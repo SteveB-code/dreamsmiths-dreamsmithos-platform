@@ -67,7 +67,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
       setPlatform(data);
       setTechnologyIds(data.technologies?.map((t: Technology) => t.id) || []);
     } catch {
-      setError("Platform not found");
+      setError("Product not found");
     } finally {
       setLoading(false);
     }
@@ -108,11 +108,11 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this platform?")) return;
+    if (!confirm("Are you sure you want to delete this product?")) return;
     const res = await fetch(`/api/platforms/${platformId}`, {
       method: "DELETE",
     });
-    if (res.ok) router.push("/platforms");
+    if (res.ok) router.push("/products");
   };
 
   const handleRemoveMember = async (assignmentId: string) => {
@@ -137,11 +137,11 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
   return (
     <div className="max-w-2xl space-y-6">
       <Link
-        href="/platforms"
+        href="/products"
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Platforms
+        Back to Products
       </Link>
 
       <Card>
@@ -165,7 +165,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
           <form onSubmit={handleSave} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Platform Name</Label>
+                <Label htmlFor="name">Product Name</Label>
                 <Input
                   id="name"
                   name="name"
@@ -295,7 +295,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleRemoveMember(member.assignmentId)}
-                      title="Remove from platform"
+                      title="Remove from product"
                     >
                       <X className="h-4 w-4" />
                     </Button>

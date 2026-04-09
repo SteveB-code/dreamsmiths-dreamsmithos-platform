@@ -195,7 +195,7 @@ export function ContractDetail({ contractId }: { contractId: string }) {
           </CardTitle>
           <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
             <Link
-              href={`/platforms/${contract.platformId}`}
+              href={`/products/${contract.platformId}`}
               className="hover:underline"
             >
               {contract.platformName}

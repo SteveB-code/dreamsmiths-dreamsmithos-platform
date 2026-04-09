@@ -128,7 +128,7 @@ export function AssignPersonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign Person to Platform</DialogTitle>
+          <DialogTitle>Assign Person to Product</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -147,7 +147,7 @@ export function AssignPersonDialog({
             </Select>
           </div>
           <div className="space-y-2" ref={roleDropdownRef}>
-            <Label>Roles on Platform</Label>
+            <Label>Roles on Product</Label>
             {selectedRoles.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {selectedRoles.map((role) => (

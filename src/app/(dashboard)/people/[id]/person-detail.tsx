@@ -281,15 +281,15 @@ export function PersonDetail({ personId }: { personId: string }) {
         </CardContent>
       </Card>
 
-      {/* Platform Assignments */}
+      {/* Product Assignments */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Platform Assignments</CardTitle>
+          <CardTitle className="text-base">Product Assignments</CardTitle>
         </CardHeader>
         <CardContent>
           {person.platforms.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Not assigned to any platforms yet.
+              Not assigned to any products yet.
             </p>
           ) : (
             <div className="space-y-3">
@@ -300,7 +300,7 @@ export function PersonDetail({ personId }: { personId: string }) {
                 >
                   <div>
                     <Link
-                      href={`/platforms/${pa.platformId}`}
+                      href={`/products/${pa.platformId}`}
                       className="font-medium hover:underline"
                     >
                       {pa.platformName}

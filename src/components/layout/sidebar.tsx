@@ -19,7 +19,7 @@ import { Logo } from "@/components/logo";
 const adminNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "People", href: "/people", icon: Users },
-  { name: "Platforms", href: "/platforms", icon: Monitor },
+  { name: "Products", href: "/products", icon: Monitor },
   { name: "Contracts", href: "/contracts", icon: FileText },
   { name: "Onboarding", href: "/onboarding", icon: ClipboardCheck },
   { name: "Playbook", href: "/playbook", icon: BookOpen },

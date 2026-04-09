@@ -81,7 +81,7 @@ export function AddContractDialog({
     };
 
     if (!body.platformId) {
-      setError("Please select a platform");
+      setError("Please select a product");
       setSaving(false);
       return;
     }
@@ -113,10 +113,10 @@ export function AddContractDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="platformId">Platform</Label>
+            <Label htmlFor="platformId">Product</Label>
             <Select value={selectedPlatformId} onValueChange={(v) => setSelectedPlatformId(v ?? "")}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a platform" />
+                <SelectValue placeholder="Select a product" />
               </SelectTrigger>
               <SelectContent>
                 {platforms.map((p) => (

@@ -100,7 +100,7 @@ export function ContractsList() {
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Client</TableHead>
-              <TableHead>Platform</TableHead>
+              <TableHead>Product</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>End Date</TableHead>
               <TableHead>Owner</TableHead>

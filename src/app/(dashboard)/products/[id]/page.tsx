@@ -10,7 +10,7 @@ export default async function PlatformPage({
 
   return (
     <div>
-      <Header title="Platform Details" />
+      <Header title="Product Details" />
       <div className="p-6">
         <PlatformDetail platformId={id} />
       </div>

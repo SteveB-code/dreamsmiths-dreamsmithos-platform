@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronRight, Loader2, Save, Sparkles, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, List, Loader2, Save, Sparkles, Trash2 } from "lucide-react";
 import { MilestoneTimeline } from "./milestone-timeline";
 
 // ---------------------------------------------------------------------------
@@ -147,6 +147,7 @@ export function MilestonePanel({
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showMilestoneList, setShowMilestoneList] = useState(false);
 
   // Inline edit state
   const [editDueDate, setEditDueDate] = useState("");
@@ -226,6 +227,8 @@ export function MilestonePanel({
       setExpandedId(null);
       return;
     }
+    // Auto-show the list when expanding a milestone (e.g. from timeline click)
+    setShowMilestoneList(true);
     setExpandedId(milestone.id);
     setEditDueDate(milestone.dueDate ? milestone.dueDate.split("T")[0] : "");
     setEditOwner(milestone.ownerPersonId || "");
@@ -334,121 +337,164 @@ export function MilestonePanel({
               onMilestoneClick={(ms) => handleExpandRow(ms)}
             />
 
-            {/* Divider */}
-            <div className="border-t" />
+            {/* Milestone summary + collapsible list */}
+            <div className="border-t pt-3">
+              {/* Summary bar */}
+              {(() => {
+                const counts: Record<string, number> = {};
+                milestones.forEach((ms) => {
+                  counts[ms.status] = (counts[ms.status] || 0) + 1;
+                });
+                const statusOrder = ["overdue", "due", "upcoming", "scheduled", "complete"];
+                const summaryParts = statusOrder
+                  .filter((s) => counts[s])
+                  .map((s) => ({ status: s, count: counts[s] }));
 
-            {/* Milestone list */}
-            <div className="space-y-1">
-            {milestones.map((ms) => (
-              <div key={ms.id} className="rounded-md border">
-                {/* Row header */}
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
-                  onClick={() => handleExpandRow(ms)}
-                >
-                  {expandedId === ms.id ? (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  )}
-                  <StatusDot status={ms.status} />
-                  <span className="flex-1 text-sm font-medium truncate">
-                    {ms.typeName}
-                  </span>
-                  <Badge variant="outline" className={`text-xs ${categoryBadgeClass(ms.typeCategory)}`}>
-                    {ms.typeCategory}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground w-[100px] text-right">
-                    {ms.dueDate ? formatDate(ms.dueDate) : "Date not set"}
-                  </span>
-                  <span className="text-xs text-muted-foreground w-[100px] text-right truncate">
-                    {ms.ownerFirstName
-                      ? `${ms.ownerFirstName} ${ms.ownerLastName}`
-                      : "Unassigned"}
-                  </span>
-                </button>
-
-                {/* Expanded inline edit */}
-                {expandedId === ms.id && (
-                  <div className="border-t px-4 py-3 space-y-3 bg-muted/30">
-                    <div className="flex items-center gap-2 text-xs">
-                      <StatusDot status={ms.status} />
-                      <span className="font-medium">{statusLabel(ms.status)}</span>
-                      {ms.typeFrequency !== "annual" && (
-                        <span className="text-muted-foreground">
-                          ({ms.typeFrequency})
+                return (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-3 text-left hover:bg-muted/30 rounded-md px-2 py-1.5 transition-colors"
+                    onClick={() => setShowMilestoneList(!showMilestoneList)}
+                  >
+                    <List className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      {milestones.length} milestones
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {summaryParts.map(({ status, count }) => (
+                        <span key={status} className="flex items-center gap-1.5">
+                          <StatusDot status={status} />
+                          <span className="text-xs text-muted-foreground">
+                            {count} {statusLabel(status).toLowerCase()}
+                          </span>
                         </span>
-                      )}
-                      {ms.completedDate && (
-                        <span className="text-muted-foreground">
-                          Completed {formatDate(ms.completedDate)}
-                          {ms.completedLate && " (late)"}
+                      ))}
+                    </div>
+                    <div className="flex-1" />
+                    {showMilestoneList ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                );
+              })()}
+
+              {/* Expandable milestone list */}
+              {showMilestoneList && (
+                <div className="space-y-1 mt-2">
+                  {milestones.map((ms) => (
+                    <div key={ms.id} className="rounded-md border">
+                      {/* Row header */}
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                        onClick={() => handleExpandRow(ms)}
+                      >
+                        {expandedId === ms.id ? (
+                          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <StatusDot status={ms.status} />
+                        <span className="flex-1 text-sm font-medium truncate">
+                          {ms.typeName}
                         </span>
+                        <Badge variant="outline" className={`text-xs ${categoryBadgeClass(ms.typeCategory)}`}>
+                          {ms.typeCategory}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground w-[100px] text-right">
+                          {ms.dueDate ? formatDate(ms.dueDate) : "Date not set"}
+                        </span>
+                        <span className="text-xs text-muted-foreground w-[100px] text-right truncate">
+                          {ms.ownerFirstName
+                            ? `${ms.ownerFirstName} ${ms.ownerLastName}`
+                            : "Unassigned"}
+                        </span>
+                      </button>
+
+                      {/* Expanded inline edit */}
+                      {expandedId === ms.id && (
+                        <div className="border-t px-4 py-3 space-y-3 bg-muted/30">
+                          <div className="flex items-center gap-2 text-xs">
+                            <StatusDot status={ms.status} />
+                            <span className="font-medium">{statusLabel(ms.status)}</span>
+                            {ms.typeFrequency !== "annual" && (
+                              <span className="text-muted-foreground">
+                                ({ms.typeFrequency})
+                              </span>
+                            )}
+                            {ms.completedDate && (
+                              <span className="text-muted-foreground">
+                                Completed {formatDate(ms.completedDate)}
+                                {ms.completedLate && " (late)"}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Due Date</Label>
+                              <Input
+                                type="date"
+                                value={editDueDate}
+                                onChange={(e) => setEditDueDate(e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Owner</Label>
+                              <Select value={editOwner} onValueChange={(v) => setEditOwner(v ?? "")}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select owner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {people.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.firstName} {p.lastName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Notes</Label>
+                            <Textarea
+                              rows={2}
+                              value={editNotes}
+                              onChange={(e) => setEditNotes(e.target.value)}
+                              placeholder="Milestone notes..."
+                            />
+                          </div>
+
+                          <div className="flex justify-between pt-1">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteMilestone(ms.id)}
+                              disabled={deletingMilestone}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                              Delete
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => handleSaveMilestone(ms.id)}
+                              disabled={savingMilestone}
+                            >
+                              <Save className="h-3.5 w-3.5 mr-1.5" />
+                              {savingMilestone ? "Saving..." : "Save"}
+                            </Button>
+                          </div>
+                        </div>
                       )}
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Due Date</Label>
-                        <Input
-                          type="date"
-                          value={editDueDate}
-                          onChange={(e) => setEditDueDate(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Owner</Label>
-                        <Select value={editOwner} onValueChange={(v) => setEditOwner(v ?? "")}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select owner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {people.map((p) => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.firstName} {p.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Notes</Label>
-                      <Textarea
-                        rows={2}
-                        value={editNotes}
-                        onChange={(e) => setEditNotes(e.target.value)}
-                        placeholder="Milestone notes..."
-                      />
-                    </div>
-
-                    <div className="flex justify-between pt-1">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteMilestone(ms.id)}
-                        disabled={deletingMilestone}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                        Delete
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => handleSaveMilestone(ms.id)}
-                        disabled={savingMilestone}
-                      >
-                        <Save className="h-3.5 w-3.5 mr-1.5" />
-                        {savingMilestone ? "Saving..." : "Save"}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

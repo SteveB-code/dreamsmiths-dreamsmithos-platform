@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Trash2, UserPlus, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Pencil, Save, Trash2, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { AssignPersonDialog } from "./assign-person-dialog";
 import { MilestonePanel } from "./milestone-panel";
@@ -91,6 +91,10 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
   const [error, setError] = useState("");
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [technologyIds, setTechnologyIds] = useState<string[]>([]);
+
+  // Section visibility state
+  const [showProductEdit, setShowProductEdit] = useState(false);
+  const [showPlanningCycle, setShowPlanningCycle] = useState(false);
 
   // Planning cycle state (separate from main form)
   const [fyStartDay, setFyStartDay] = useState<string>("");
@@ -266,208 +270,7 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
         strategicPlanningWindowEnd={platform.strategicPlanningWindowEnd}
       />
 
-      {/* ── Product Details ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Product Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Product Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  defaultValue={platform.name}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientOrg">Client Organisation</Label>
-                <Input
-                  id="clientOrg"
-                  name="clientOrg"
-                  defaultValue={platform.clientOrg}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select name="status" defaultValue={platform.status}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="retainerTier">Retainer Tier</Label>
-                <Input
-                  id="retainerTier"
-                  name="retainerTier"
-                  defaultValue={platform.retainerTier || ""}
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label>Tech Stack</Label>
-                <TechSelect
-                  selectedIds={technologyIds}
-                  onChange={setTechnologyIds}
-                />
-              </div>
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  rows={2}
-                  defaultValue={platform.description || ""}
-                />
-              </div>
-            </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <div className="flex justify-between pt-2">
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-              <Button type="submit" disabled={saving}>
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {/* ── Client Planning Cycle ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Client Planning Cycle</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Financial Year Start</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <Select value={fyStartDay} onValueChange={(v) => setFyStartDay(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                    <SelectItem key={d} value={String(d)}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={fyStartMonth} onValueChange={(v) => setFyStartMonth(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map((m, i) => (
-                    <SelectItem key={m} value={String(i + 1)}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {fyStartMonth && (
-              <p className="text-sm text-muted-foreground">
-                Current financial year: {getFYLabel(parseInt(fyStartMonth))}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Budget Preparation Deadline</Label>
-            <Select value={budgetPrepMonth} onValueChange={(v) => setBudgetPrepMonth(v ?? "")}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select month" />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((m, i) => (
-                  <SelectItem key={m} value={String(i + 1)}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Month by which the client needs budget inputs finalised
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Strategic Planning Window</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <Select value={planningWindowStart} onValueChange={(v) => setPlanningWindowStart(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Start month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map((m, i) => (
-                    <SelectItem key={m} value={String(i + 1)}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={planningWindowEnd} onValueChange={(v) => setPlanningWindowEnd(v ?? "")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="End month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map((m, i) => (
-                    <SelectItem key={m} value={String(i + 1)}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              When the client is actively doing strategic planning
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="planningNotes">Planning Cycle Notes</Label>
-            <Textarea
-              id="planningNotes"
-              rows={2}
-              value={planningNotes}
-              onChange={(e) => setPlanningNotes(e.target.value)}
-              placeholder="Additional context about client's planning process..."
-            />
-          </div>
-
-          {planningError && <p className="text-sm text-destructive">{planningError}</p>}
-
-          <div className="flex justify-end pt-2">
-            <Button type="button" onClick={handleSavePlanning} disabled={savingPlanning}>
-              <Save className="h-4 w-4 mr-2" />
-              {savingPlanning ? "Saving..." : "Save Planning Cycle"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Team ── */}
+      {/* ── Team (moved up — frequently referenced) ── */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -488,48 +291,336 @@ export function PlatformDetail({ platformId }: { platformId: string }) {
               No team members assigned yet.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
               {activeTeam.map((member) => (
                 <div
                   key={member.assignmentId}
-                  className="flex items-center justify-between rounded-md border p-3"
+                  className="flex items-center gap-2 rounded-md border px-3 py-2"
                 >
-                  <div>
+                  {/* Avatar initials */}
+                  <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground shrink-0">
+                    {member.firstName[0]}{member.lastName[0]}
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Link
                       href={`/people/${member.personId}`}
-                      className="font-medium hover:underline"
+                      className="text-sm font-medium hover:underline whitespace-nowrap"
                     >
                       {member.firstName} {member.lastName}
                     </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {member.email}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
                     {member.roleOnPlatform.split(", ").map((role: string) => (
-                      <Badge key={role} variant="outline">{role}</Badge>
+                      <Badge key={role} variant="outline" className="text-[10px] px-1.5 py-0">
+                        {role}
+                      </Badge>
                     ))}
-                    <Badge
-                      variant={
-                        member.type === "employee" ? "default" : "secondary"
-                      }
-                    >
-                      {member.type}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleRemoveMember(member.assignmentId)}
-                      title="Remove from product"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 ml-1"
+                    onClick={() => handleRemoveMember(member.assignmentId)}
+                    title="Remove from product"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
+      </Card>
+
+      {/* ── Product Details — read-only summary with edit toggle ── */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Product Details</CardTitle>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowProductEdit(!showProductEdit)}
+            >
+              {showProductEdit ? (
+                <>
+                  <X className="h-4 w-4 mr-1.5" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Pencil className="h-4 w-4 mr-1.5" />
+                  Edit
+                </>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!showProductEdit ? (
+            /* Compact read-only display */
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+              <div className="flex items-baseline gap-2">
+                <span className="text-muted-foreground shrink-0">Product:</span>
+                <span className="font-medium">{platform.name}</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-muted-foreground shrink-0">Client:</span>
+                <span className="font-medium">{platform.clientOrg}</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-muted-foreground shrink-0">Status:</span>
+                <Badge
+                  variant={
+                    platform.status === "active" ? "default"
+                      : platform.status === "paused" ? "secondary"
+                      : "destructive"
+                  }
+                  className="text-[10px]"
+                >
+                  {platform.status}
+                </Badge>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-muted-foreground shrink-0">Tier:</span>
+                <span className="font-medium">{platform.retainerTier || "—"}</span>
+              </div>
+              {platform.technologies && platform.technologies.length > 0 && (
+                <div className="col-span-2 flex items-baseline gap-2">
+                  <span className="text-muted-foreground shrink-0">Tech Stack:</span>
+                  <span className="font-medium">{platform.technologies.map((t) => t.name).join(", ")}</span>
+                </div>
+              )}
+              {platform.description && (
+                <div className="col-span-2 flex items-baseline gap-2">
+                  <span className="text-muted-foreground shrink-0">Description:</span>
+                  <span>{platform.description}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Editable form */
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Product Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={platform.name}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="clientOrg">Client Organisation</Label>
+                  <Input
+                    id="clientOrg"
+                    name="clientOrg"
+                    defaultValue={platform.clientOrg}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select name="status" defaultValue={platform.status}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="retainerTier">Retainer Tier</Label>
+                  <Input
+                    id="retainerTier"
+                    name="retainerTier"
+                    defaultValue={platform.retainerTier || ""}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label>Tech Stack</Label>
+                  <TechSelect
+                    selectedIds={technologyIds}
+                    onChange={setTechnologyIds}
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    rows={2}
+                    defaultValue={platform.description || ""}
+                  />
+                </div>
+              </div>
+
+              {error && <p className="text-sm text-destructive">{error}</p>}
+
+              <div className="flex justify-between pt-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Client Planning Cycle — collapsible with summary ── */}
+      <Card>
+        <CardHeader>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between text-left"
+            onClick={() => setShowPlanningCycle(!showPlanningCycle)}
+          >
+            <CardTitle className="text-base">Client Planning Cycle</CardTitle>
+            <div className="flex items-center gap-3">
+              {!showPlanningCycle && fyConfigured && (
+                <span className="text-sm text-muted-foreground">
+                  FY starts {platform.financialYearStartDay} {MONTH_ABBR[(platform.financialYearStartMonth || 1) - 1]}
+                  {platform.budgetPreparationMonth && (
+                    <> · Budget: {MONTH_ABBR[platform.budgetPreparationMonth - 1]}</>
+                  )}
+                  {platform.strategicPlanningWindowStart && platform.strategicPlanningWindowEnd && (
+                    <> · Planning: {MONTH_ABBR[platform.strategicPlanningWindowStart - 1]}–{MONTH_ABBR[platform.strategicPlanningWindowEnd - 1]}</>
+                  )}
+                </span>
+              )}
+              {!showPlanningCycle && !fyConfigured && (
+                <span className="text-sm text-muted-foreground italic">Not configured</span>
+              )}
+              {showPlanningCycle ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              )}
+            </div>
+          </button>
+        </CardHeader>
+        {showPlanningCycle && (
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Financial Year Start</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Select value={fyStartDay} onValueChange={(v) => setFyStartDay(v ?? "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <SelectItem key={d} value={String(d)}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={fyStartMonth} onValueChange={(v) => setFyStartMonth(v ?? "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m, i) => (
+                      <SelectItem key={m} value={String(i + 1)}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {fyStartMonth && (
+                <p className="text-sm text-muted-foreground">
+                  Current financial year: {getFYLabel(parseInt(fyStartMonth))}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Budget Preparation Deadline</Label>
+              <Select value={budgetPrepMonth} onValueChange={(v) => setBudgetPrepMonth(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m, i) => (
+                    <SelectItem key={m} value={String(i + 1)}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Month by which the client needs budget inputs finalised
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Strategic Planning Window</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Select value={planningWindowStart} onValueChange={(v) => setPlanningWindowStart(v ?? "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Start month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m, i) => (
+                      <SelectItem key={m} value={String(i + 1)}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={planningWindowEnd} onValueChange={(v) => setPlanningWindowEnd(v ?? "")}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="End month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MONTHS.map((m, i) => (
+                      <SelectItem key={m} value={String(i + 1)}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                When the client is actively doing strategic planning
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="planningNotes">Planning Cycle Notes</Label>
+              <Textarea
+                id="planningNotes"
+                rows={2}
+                value={planningNotes}
+                onChange={(e) => setPlanningNotes(e.target.value)}
+                placeholder="Additional context about client's planning process..."
+              />
+            </div>
+
+            {planningError && <p className="text-sm text-destructive">{planningError}</p>}
+
+            <div className="flex justify-end pt-2">
+              <Button type="button" onClick={handleSavePlanning} disabled={savingPlanning}>
+                <Save className="h-4 w-4 mr-2" />
+                {savingPlanning ? "Saving..." : "Save Planning Cycle"}
+              </Button>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       <AssignPersonDialog

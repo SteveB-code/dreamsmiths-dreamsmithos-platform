@@ -448,6 +448,12 @@ export function MilestonePanel({
                                   <SelectValue placeholder="Select owner" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  {/* Ensure current owner always appears even if people list hasn't loaded */}
+                                  {editOwner && !people.some((p) => p.id === editOwner) && ms.ownerFirstName && (
+                                    <SelectItem key={editOwner} value={editOwner}>
+                                      {ms.ownerFirstName} {ms.ownerLastName}
+                                    </SelectItem>
+                                  )}
                                   {people.map((p) => (
                                     <SelectItem key={p.id} value={p.id}>
                                       {p.firstName} {p.lastName}
